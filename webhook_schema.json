@@ -1,0 +1,64 @@
+{
+  "webhook_payload_schema": {
+    "nom_agence": "string (obligatoire)",
+    "secteur": "string (obligatoire)",
+    "cible_principale": "string (obligatoire)",
+    "objectifs_prospection": [
+      "string"
+    ],
+    "style_prospection": {
+      "ton": "formel|sympa|technique|commercial",
+      "frequence": "quotidien|hebdomadaire|mensuel",
+      "type_message": "cold_email|linkedin|phone",
+      "liens_partager": [
+        "url"
+      ],
+      "cta": "string"
+    },
+    "exemples_messages": [
+      "string"
+    ],
+    "restrictions": [
+      "string"
+    ],
+    "priorites": [
+      "string"
+    ],
+    "localisation": "string",
+    "budget_max": "number",
+    "langue": "fr|en|mix"
+  },
+  "example_payload": {
+    "nom_agence": "Agence Digitale Pro",
+    "secteur": "Marketing Digital",
+    "cible_principale": "E-commerçants B2C",
+    "objectifs_prospection": [
+      "générer 50 leads/mois",
+      "augmenter CA de 30%"
+    ],
+    "style_prospection": {
+      "ton": "sympa",
+      "frequence": "quotidien",
+      "type_message": "cold_email",
+      "liens_partager": [
+        "https://agence.com/portfolio",
+        "https://agence.com/case-studies"
+      ],
+      "cta": "Réserver un appel découverte gratuit"
+    },
+    "exemples_messages": [
+      "Bonjour [Nom], j'ai remarqué que votre site e-commerce pourrait bénéficier de notre expertise en SEO local..."
+    ],
+    "restrictions": [
+      "pas de spam",
+      "respecter RGPD"
+    ],
+    "priorites": [
+      "qualité > quantité",
+      "PME locales"
+    ],
+    "localisation": "France entière",
+    "budget_max": 5000,
+    "langue": "fr"
+  }
+}
