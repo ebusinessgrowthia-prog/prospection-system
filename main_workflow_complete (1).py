@@ -3,7 +3,6 @@
 🚀 START COMMAND COMPLÈTE - DÉPLOIEMENT AUTOMATIQUE INTÉGRAL
 Ce fichier est exécuté automatiquement par la startCommand: python main_workflow_complete.py
 """
-
 import os
 import sys
 import json
@@ -335,7 +334,7 @@ class ProspectionSystem:
             
         port = int(os.getenv('PORT', 5000))
         app.run(host='0.0.0.0', port=port)
-
+        
 def main():
     """Fonction principale exécutée par la start command"""
     logger.info("🚀 Démarrage du système de prospection complet")
