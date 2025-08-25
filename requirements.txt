@@ -1,5 +1,5 @@
-# 🚀 DÉPENDANCES POUR LE SYSTÈME DE PROSPECTION – VERSION RENDER FIX
-# === BUILD ESSENTIELS (obligatoires pour éviter l'erreur setuptools) ===
+# 🚀 DÉPENDANCES POUR PYTHON 3.11 – VERSION RENDER FIX
+# === BUILD ESSENTIELS (évite l'erreur setuptools + Python 3.13) ===
 setuptools>=70.0.0
 wheel>=0.42.0
 pip>=24.0
