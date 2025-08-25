@@ -1,115 +1,117 @@
-<function_calls>
-<invoke name="create_file">
-<parameter name="file_path">render_fixed.yaml</parameter>
-<parameter name="file_contents"># 🚀 RENDER.YAML - CONFIGURATION COMPLÈTE CORRIGÉE
-
 services:
+  # 🎯 SERVICE PRINCIPAL - SYSTÈME DE PROSPECTION COMPLET
+  - type: web
+    name: prospection-system
+    env: python
+    runtime: python-3.9.0
+    buildCommand: |
+      pip install --upgrade pip
+      pip install --no-cache-dir -r requirements.txt
+    startCommand: python main_workflow_complete.py
+    envVars:
+      # 🔑 CLÉS API
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: ABSTRACT_API_KEY
+        sync: false
+      - key: HUNTER_API_KEY
+        sync: false
+      
+      # 📧 EMAILS CONFIGURATION
+      - key: FROM_EMAIL_1
+        value: ebusinessgrowthia@gmail.com
+      - key: FROM_NAME_1
+        value: EBUSINESS GROWTH
+      - key: FROM_EMAIL_2
+        value: ia.ebusinessag@gmail.com
+      - key: FROM_NAME_2
+        value: EBUSINESS IA
+      
+      # 📊 GOOGLE SHEETS CONFIG
+      - key: GOOGLE_SHEETS_CREDENTIALS_FILE
+        value: credentials.json
+      - key: GOOGLE_SHEETS_SPREADSHEET_NAME
+        value: Prospection
+      
+      # ⚙️ SYSTEM CONFIG
+      - key: DAILY_EMAIL_LIMIT
+        value: "100"
+      - key: MAX_DORKS_PER_CAMPAIGN
+        value: "50"
+      - key: MAX_PROSPECTS_PER_DORK
+        value: "20"
+      - key: REQUEST_DELAY
+        value: "1.0"
+      - key: EMAIL_VALIDATION_THRESHOLD
+        value: "0.8"
+      - key: MAX_VALIDATION_RETRIES
+        value: "3"
+      - key: RETENTION_DAYS
+        value: "90"
+      - key: UNSUBSCRIBE_LINK
+        value: "%%unsubscribe%%
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FILE
+        value: prospection.log
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 5000
+    
+    # 📊 CONFIGURATION RESSOURCES
+    plan: free
+    region: frankfurt
+    
+    # 🔄 REDÉMARRAGE AUTOMATIQUE
+    autoDeploy: true
+    
+    # 📈 HEALTH CHECKS
+    healthCheckPath: /health
+    
+    # ⏰ TIMEOUTS
+    buildTimeout: 900
+    startTimeout: 180
 
-🎯 SERVICE PRINCIPAL - SYSTÈME DE PROSPECTION COMPLET
-type: web
-name: prospection-system
-env: python
-runtime: python-3.9.0
-buildCommand: |
-pip install --upgrade pip
-pip install --no-cache-dir -r requirements.txt
-startCommand: python main_workflow_complete.py
-envVars:
-🔑 CLÉS API - À CONFIGURER DANS RENDER
-key: GEMINI_API_KEY
-sync: false
-key: SENDGRID_API_KEY
-sync: false
-key: ABSTRACT_API_KEY
-sync: false
-key: HUNTER_API_KEY
-sync: false
-key: FROM_EMAIL_1
-value: ebusinessgrowthia@gmail.com
-key: FROM_NAME_1
-value: EBUSINESS GROWTH
-key: FROM_EMAIL_2
-value: ia.ebusinessag@gmail.com
-key: FROM_NAME_2
-value: EBUSINESS IA
-key: GOOGLE_SHEETS_CREDENTIALS_FILE
-value: credentials.json
-key: GOOGLE_SHEETS_SPREADSHEET_NAME
-value: Prospection
-key: DAILY_EMAIL_LIMIT
-value: "100"
-key: MAX_DORKS_PER_CAMPAIGN
-value: "50"
-key: MAX_PROSPECTS_PER_DORK
-value: "20"
-key: REQUEST_DELAY
-value: "1.0"
-key: EMAIL_VALIDATION_THRESHOLD
-value: "0.8"
-key: MAX_VALIDATION_RETRIES
-value: "3"
-key: RETENTION_DAYS
-value: "90"
-key: UNSUBSCRIBE_LINK
-value: "%%unsubscribe%%
-key: LOG_LEVEL
-value: INFO
-key: LOG_FILE
-value: prospection.log
-key: FLASK_ENV
-value: production
-key: PORT
-value: 5000
-📊 CONFIGURATION RESSOURCES
-plan: free
-region: frankfurt
-🔄 REDÉMARRAGE AUTOMATIQUE
-autoDeploy: true
-📈 HEALTH CHECKS
-healthCheckPath: /health
-⏰ TIMEOUTS
-buildTimeout: 600
-startTimeout: 120
-📋 CONFIGURATION ENVIRONNEMENT
+# 📋 CONFIGURATION ENVIRONNEMENT
 envVarGroups:
+  - name: prospection-secrets
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: ABSTRACT_API_KEY
+        sync: false
+      - key: HUNTER_API_KEY
+        sync: false
+      - key: FROM_EMAIL_1
+        value: ebusinessgrowthia@gmail.com
+      - key: FROM_NAME_1
+        value: EBUSINESS GROWTH
+      - key: FROM_EMAIL_2
+        value: ia.ebusinessag@gmail.com
+      - key: FROM_NAME_2
+        value: EBUSINESS IA
+      - key: GOOGLE_SHEETS_CREDENTIALS_FILE
+        value: credentials.json
+      - key: GOOGLE_SHEETS_SPREADSHEET_NAME
+        value: Prospection
 
-name: prospection-secrets
-envVars:
-key: GEMINI_API_KEY
-sync: false
-key: SENDGRID_API_KEY
-sync: false
-key: ABSTRACT_API_KEY
-sync: false
-key: HUNTER_API_KEY
-sync: false
-key: FROM_EMAIL_1
-value: ebusinessgrowthia@gmail.com
-key: FROM_NAME_1
-value: EBUSINESS GROWTH
-key: FROM_EMAIL_2
-value: ia.ebusinessag@gmail.com
-key: FROM_NAME_2
-value: EBUSINESS IA
-key: GOOGLE_SHEETS_CREDENTIALS_FILE
-value: credentials.json
-key: GOOGLE_SHEETS_SPREADSHEET_NAME
-value: Prospection
-🚀 CONFIGURATION DÉPLOIEMENT
+# 🚀 CONFIGURATION DÉPLOIEMENT
 previews:
-generation: automatic
-expiration: 7d
+  generation: automatic
+  expiration: 7d
 
-📊 MONITORING
+# 📊 MONITORING
 metrics:
-
-name: requests
-type: requests
-name: response_time
-type: response_time
-name: cpu
-type: cpu
-name: memory
-type: memory</parameter>
-</invoke>
-</function_calls>
+  - name: requests
+    type: requests
+  - name: response_time
+    type: response_time
+  - name: cpu
+    type: cpu
+  - name: memory
+    type: memory
