@@ -1,6 +1,5 @@
 import gspread
 from google.oauth2.service_account import Credentials
-import pandas as pd
 from datetime import datetime
 import logging
 from config import GOOGLE_SHEETS_CREDENTIALS_FILE, GOOGLE_SHEETS_SPREADSHEET_NAME
@@ -74,7 +73,11 @@ class GoogleSheetsManager:
             
             for prospect in prospects:
                 # Vérifier si le prospect existe déjà
-                existing = worksheet.find(prospect["email"])
+                try:
+                    existing = worksheet.find(prospect["email"])
+                except:
+                    existing = None
+                    
                 if not existing:
                     row = [
                         prospect["id"],
