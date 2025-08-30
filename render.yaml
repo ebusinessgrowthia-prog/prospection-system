@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: prospection-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main_workflow_complete.py
+    envVars:
+      - key: GEMINI_API_KEY
+        value: AIzaSyBdEadbjoGwtY1r1mKYOFzrsJnMow8eIMo
+      - key: SENDGRID_API_KEY
+        value: uJjC5KAe1JtbXK1fUo95eLkwy8ZgwOOQ
+      - key: FROM_EMAIL_1
+        value: ebusinessgrowthia@gmail.com
+      - key: FROM_NAME_1
+        value: EBUSINESS GROWTH
+      - key: FROM_EMAIL_2
+        value: ia.ebusinessag@gmail.com
+      - key: FROM_NAME_2
+        value: EBUSINESS IA
+      - key: GOOGLE_SHEETS_CREDENTIALS_FILE
+        value: credentials.json
+      - key: GOOGLE_SHEETS_SPREADSHEET_NAME
+        value: Prospection
+      - key: DAILY_EMAIL_LIMIT
+        value: "100"
+      - key: MAX_DORKS_PER_CAMPAIGN
+        value: "50"
+      - key: MAX_PROSPECTS_PER_DORK
+        value: "20"
+      - key: REQUEST_DELAY
+        value: "1.0"
+      - key: EMAIL_VALIDATION_THRESHOLD
+        value: "0.8"
+      - key: RETENTION_DAYS
+        value: "90"
+      - key: UNSUBSCRIBE_LINK
+        value: %%unsubscribe%%
+      - key: PORT
+        value: "5000"
+      - key: FLASK_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FILE
+        value: prospection.log
