@@ -3,7 +3,7 @@ services:
     name: prospection-system
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python main_workflow_complete.py
+    startCommand: gunicorn main_workflow_complete:app --bind 0.0.0.0:$PORT
     envVars:
       - key: GEMINI_API_KEY
         value: AIzaSyBdEadbjoGwtY1r1mKYOFzrsJnMow8eIMo
