@@ -7,6 +7,8 @@ load_dotenv()
 # Configuration API Keys
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+ABSTRACT_API_KEY = os.getenv("ABSTRACT_API_KEY")
+HUNTER_API_KEY = os.getenv("HUNTER_API_KEY")
 
 # Google Sheets Configuration
 GOOGLE_SHEETS_CREDENTIALS_FILE = os.getenv("GOOGLE_SHEETS_CREDENTIALS_FILE", "credentials.json")
