@@ -3,9 +3,7 @@ import os
 import json
 import time
 import logging
-import threading
 from datetime import datetime, timedelta
-import schedule
 
 from config import *
 from google_sheets_manager import GoogleSheetsManager
@@ -42,32 +40,8 @@ class ProspectionOrchestrator:
         # Initialiser Google Sheets
         self.google_sheets.initialize_sheets()
         
-        # Planifier les tâches quotidiennes
-        self.schedule_daily_tasks()
-        
-    def schedule_daily_tasks(self):
-        """Planifie les tâches quotidiennes"""
-        schedule.every().day.at("09:00").do(self.run_daily_campaigns)
-        
-        # Démarrer le thread pour les tâches planifiées
-        def run_schedule():
-            while True:
-                schedule.run_pending()
-                time.sleep(60)
-        
-        thread = threading.Thread(target=run_schedule)
-        thread.daemon = True
-        thread.start()
-    
-    def run_daily_campaigns(self):
-        """Exécute les campagnes quotidiennes pour toutes les agences"""
-        logger.info("Démarrage des campagnes quotidiennes")
-        
-        for agency_name, config in AGENCES_CONFIG.items():
-            try:
-                self.run_agency_campaign(agency_name, config)
-            except Exception as e:
-                logger.error(f"Erreur lors de la campagne pour {agency_name}: {e}")
+        # Pas de threading pour simplifier
+        logger.info("Système initialisé - prêt pour les campagnes manuelles")
     
     def run_agency_campaign(self, agency_name, config):
         """Exécute une campagne pour une agence spécifique"""
