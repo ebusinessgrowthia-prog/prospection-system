@@ -6,43 +6,67 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import google.generativeai as genai
 from datetime import datetime
-from flask_cors import CORS  # Ajout du support CORS
+from flask_cors import CORS
 
 app = Flask(__name__)
-# Activer CORS pour toutes les routes
-CORS(app, resources={
-    r"/*": {
-        "origins": ["*"],  # Autorise toutes les origines (à restreindre en production)
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }
-})
+CORS(app, resources={r"/*": {"origins": ["*"], "methods": ["GET", "POST", "OPTIONS"]}})
 
-# Configuration des variables d'environnement
+# Configuration
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDlpgExpY2CqmPki0cb4dNRQICJKZ2i0TM')
 
-# Configuration SMTP pour EBUSINESS GROWTH
+# Configuration SMTP
 SMTP_GROWTH_SERVER = "smtp.gmail.com"
 SMTP_GROWTH_PORT = 587
 SMTP_GROWTH_USERNAME = "ebusinessgrowthai@gmail.com"
 SMTP_GROWTH_PASSWORD = "bssi qnqy rdfz cchf".replace(" ", "")
 
-# Configuration SMTP pour EBUSINESS AI
 SMTP_AI_SERVER = "smtp.gmail.com"
 SMTP_AI_PORT = 587
 SMTP_AI_USERNAME = "ia.ebusinessag@gmail.com"
 SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy".replace(" ", "")
 
-# Emails de notification
 EMAIL_GROWTH = "ebusinessgrowthia@gmail.com"
 EMAIL_AI = "ia.ebusinessag@gmail.com"
 
-# Configuration Gemini
 genai.configure(api_key=GEMINI_API_KEY)
+
+def log_message(message):
+    """Fonction pour logger les messages avec timestamp"""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {message}")
+
+def send_email_with_logs(to_email, subject, html_content, smtp_config, email_type=""):
+    """Envoie un email avec logs détaillés"""
+    log_message(f"Tentative d'envoi d'email {email_type} à {to_email}")
+    
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = smtp_config['username']
+        msg['To'] = to_email
+        msg.attach(MIMEText(html_content, 'html'))
+        
+        log_message(f"Connexion au serveur SMTP {smtp_config['server']}:{smtp_config['port']}")
+        
+        with smtplib.SMTP(smtp_config['server'], smtp_config['port']) as server:
+            log_message("Démarrage TLS...")
+            server.starttls()
+            
+            log_message("Authentification SMTP...")
+            server.login(smtp_config['username'], smtp_config['password'])
+            
+            log_message(f"Envoi de l'email à {to_email}...")
+            server.send_message(msg)
+        
+        log_message(f"✅ Email {email_type} envoyé avec succès à {to_email}")
+        return True
+        
+    except Exception as e:
+        log_message(f"❌ Erreur envoi email {email_type}: {str(e)}")
+        return False
 
 @app.after_request
 def after_request(response):
-    """Ajoute les en-têtes CORS à chaque réponse"""
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
@@ -50,35 +74,45 @@ def after_request(response):
 
 @app.route('/webhook/growth', methods=['POST', 'OPTIONS'])
 def webhook_growth():
-    """Webhook pour EBUSINESS GROWTH"""
-    # Gérer la requête OPTIONS (pré-vol CORS)
     if request.method == 'OPTIONS':
         return '', 200
     
+    log_message("🚀 WEBHOOK GROWTH REÇU")
+    
     try:
-        print(f"\n{'='*50}")
-        print("WEBHOOK GROWTH REÇU")
-        print(f"{'='*50}")
+        # Log des informations de la requête
+        log_message(f"Content-Type: {request.content_type}")
+        log_message(f"Method: {request.method}")
+        log_message(f"Headers: {dict(request.headers)}")
         
-        # Récupérer les données du formulaire
+        # Récupérer les données
+        form_data = {}
         if request.form:
             form_data = request.form.to_dict()
-            print("Données reçues comme formulaire (form-data)")
+            log_message("📝 Données reçues comme form-data")
         elif request.is_json:
             form_data = request.get_json()
-            print("Données reçues comme JSON")
+            log_message("📝 Données reçues comme JSON")
         elif request.data:
             try:
                 form_data = json.loads(request.data.decode('utf-8'))
-                print("Données reçues comme JSON brut")
+                log_message("📝 Données reçues comme JSON brut")
             except:
                 form_data = {'raw_data': request.data.decode('utf-8')}
-                print("Données reçues comme texte brut")
-        else:
-            form_data = {}
-            print("Aucune donnée reçue")
+                log_message("📝 Données reçues comme texte brut")
         
-        print("Données reçues:", form_data)
+        log_message(f"📋 Données brutes: {form_data}")
+        
+        # Vérifier les champs obligatoires
+        required_fields = ['nom', 'email']
+        missing_fields = [field for field in required_fields if field not in form_data]
+        
+        if missing_fields:
+            log_message(f"❌ Champs manquants: {missing_fields}")
+            return jsonify({
+                "status": "error",
+                "message": f"Champs obligatoires manquants: {', '.join(missing_fields)}"
+            }), 400
         
         # Traiter les données
         processed_data = {
@@ -90,9 +124,17 @@ def webhook_growth():
             'description': form_data.get('description', 'Non spécifié')
         }
         
-        print("Données traitées:", processed_data)
+        log_message(f"✅ Données traitées: {processed_data}")
         
-        # Créer les emails
+        # Configuration SMTP pour GROWTH
+        smtp_config = {
+            'server': SMTP_GROWTH_SERVER,
+            'port': SMTP_GROWTH_PORT,
+            'username': SMTP_GROWTH_USERNAME,
+            'password': SMTP_GROWTH_PASSWORD
+        }
+        
+        # Créer et envoyer l'email de notification
         subject_notification = f"🚀 Nouveau Lead AUTOMATISATION - EBUSINESS GROWTH - {processed_data['nom']}"
         html_notification = f"""
         <!DOCTYPE html>
@@ -129,6 +171,15 @@ def webhook_growth():
         </html>
         """
         
+        notification_sent = send_email_with_logs(
+            EMAIL_GROWTH, 
+            subject_notification, 
+            html_notification, 
+            smtp_config, 
+            "notification GROWTH"
+        )
+        
+        # Créer et envoyer l'email client
         subject_customer = "Votre réservation est confirmée ✅"
         html_customer = f"""
         <!DOCTYPE html>
@@ -160,45 +211,28 @@ def webhook_growth():
         </html>
         """
         
-        # Envoyer les emails
-        try:
-            # Email de notification
-            msg_notification = MIMEMultipart('alternative')
-            msg_notification['Subject'] = subject_notification
-            msg_notification['From'] = SMTP_GROWTH_USERNAME
-            msg_notification['To'] = EMAIL_GROWTH
-            msg_notification.attach(MIMEText(html_notification, 'html'))
-            
-            with smtplib.SMTP(SMTP_GROWTH_SERVER, SMTP_GROWTH_PORT) as server:
-                server.starttls()
-                server.login(SMTP_GROWTH_USERNAME, SMTP_GROWTH_PASSWORD)
-                server.send_message(msg_notification)
-            
-            # Email client
-            msg_customer = MIMEMultipart('alternative')
-            msg_customer['Subject'] = subject_customer
-            msg_customer['From'] = SMTP_GROWTH_USERNAME
-            msg_customer['To'] = processed_data['email']
-            msg_customer.attach(MIMEText(html_customer, 'html'))
-            
-            with smtplib.SMTP(SMTP_GROWTH_SERVER, SMTP_GROWTH_PORT) as server:
-                server.starttls()
-                server.login(SMTP_GROWTH_USERNAME, SMTP_GROWTH_PASSWORD)
-                server.send_message(msg_customer)
-            
-            print("Emails envoyés avec succès")
-            
-        except Exception as e:
-            print(f"Erreur envoi email: {e}")
+        customer_sent = send_email_with_logs(
+            processed_data['email'], 
+            subject_customer, 
+            html_customer, 
+            smtp_config, 
+            "client GROWTH"
+        )
+        
+        log_message(f"📧 Résumé envoi emails - Notification: {notification_sent}, Client: {customer_sent}")
         
         return jsonify({
             "status": "success",
             "message": "Lead traité avec succès pour EBUSINESS GROWTH",
-            "data": processed_data
+            "data": processed_data,
+            "emails_sent": {
+                "notification": notification_sent,
+                "customer": customer_sent
+            }
         }), 200
         
     except Exception as e:
-        print(f"ERREUR WEBHOOK GROWTH: {str(e)}")
+        log_message(f"❌ ERREUR WEBHOOK GROWTH: {str(e)}")
         return jsonify({
             "status": "error",
             "message": f"Erreur lors du traitement: {str(e)}"
@@ -206,35 +240,45 @@ def webhook_growth():
 
 @app.route('/webhook/ai', methods=['POST', 'OPTIONS'])
 def webhook_ai():
-    """Webhook pour EBUSINESS AI"""
-    # Gérer la requête OPTIONS (pré-vol CORS)
     if request.method == 'OPTIONS':
         return '', 200
     
+    log_message("🤖 WEBHOOK AI REÇU")
+    
     try:
-        print(f"\n{'='*50}")
-        print("WEBHOOK AI REÇU")
-        print(f"{'='*50}")
+        # Log des informations de la requête
+        log_message(f"Content-Type: {request.content_type}")
+        log_message(f"Method: {request.method}")
+        log_message(f"Headers: {dict(request.headers)}")
         
-        # Récupérer les données du formulaire
+        # Récupérer les données
+        form_data = {}
         if request.form:
             form_data = request.form.to_dict()
-            print("Données reçues comme formulaire (form-data)")
+            log_message("📝 Données reçues comme form-data")
         elif request.is_json:
             form_data = request.get_json()
-            print("Données reçues comme JSON")
+            log_message("📝 Données reçues comme JSON")
         elif request.data:
             try:
                 form_data = json.loads(request.data.decode('utf-8'))
-                print("Données reçues comme JSON brut")
+                log_message("📝 Données reçues comme JSON brut")
             except:
                 form_data = {'raw_data': request.data.decode('utf-8')}
-                print("Données reçues comme texte brut")
-        else:
-            form_data = {}
-            print("Aucune donnée reçue")
+                log_message("📝 Données reçues comme texte brut")
         
-        print("Données reçues:", form_data)
+        log_message(f"📋 Données brutes: {form_data}")
+        
+        # Vérifier les champs obligatoires
+        required_fields = ['nom', 'email']
+        missing_fields = [field for field in required_fields if field not in form_data]
+        
+        if missing_fields:
+            log_message(f"❌ Champs manquants: {missing_fields}")
+            return jsonify({
+                "status": "error",
+                "message": f"Champs obligatoires manquants: {', '.join(missing_fields)}"
+            }), 400
         
         # Traiter les données
         processed_data = {
@@ -247,9 +291,17 @@ def webhook_ai():
             'societe': form_data.get('societe', 'Non spécifié')
         }
         
-        print("Données traitées:", processed_data)
+        log_message(f"✅ Données traitées: {processed_data}")
         
-        # Créer les emails
+        # Configuration SMTP pour AI
+        smtp_config = {
+            'server': SMTP_AI_SERVER,
+            'port': SMTP_AI_PORT,
+            'username': SMTP_AI_USERNAME,
+            'password': SMTP_AI_PASSWORD
+        }
+        
+        # Créer et envoyer l'email de notification
         subject_notification = f"🤖 Nouveau Lead AUTOMATISATION - EBUSINESS AI - {processed_data['nom']}"
         html_notification = f"""
         <!DOCTYPE html>
@@ -286,6 +338,15 @@ def webhook_ai():
         </html>
         """
         
+        notification_sent = send_email_with_logs(
+            EMAIL_AI, 
+            subject_notification, 
+            html_notification, 
+            smtp_config, 
+            "notification AI"
+        )
+        
+        # Créer et envoyer l'email client
         subject_customer = "Votre demande d'audit e-commerce est confirmée ✅"
         html_customer = f"""
         <!DOCTYPE html>
@@ -319,45 +380,28 @@ def webhook_ai():
         </html>
         """
         
-        # Envoyer les emails
-        try:
-            # Email de notification
-            msg_notification = MIMEMultipart('alternative')
-            msg_notification['Subject'] = subject_notification
-            msg_notification['From'] = SMTP_AI_USERNAME
-            msg_notification['To'] = EMAIL_AI
-            msg_notification.attach(MIMEText(html_notification, 'html'))
-            
-            with smtplib.SMTP(SMTP_AI_SERVER, SMTP_AI_PORT) as server:
-                server.starttls()
-                server.login(SMTP_AI_USERNAME, SMTP_AI_PASSWORD)
-                server.send_message(msg_notification)
-            
-            # Email client
-            msg_customer = MIMEMultipart('alternative')
-            msg_customer['Subject'] = subject_customer
-            msg_customer['From'] = SMTP_AI_USERNAME
-            msg_customer['To'] = processed_data['email']
-            msg_customer.attach(MIMEText(html_customer, 'html'))
-            
-            with smtplib.SMTP(SMTP_AI_SERVER, SMTP_AI_PORT) as server:
-                server.starttls()
-                server.login(SMTP_AI_USERNAME, SMTP_AI_PASSWORD)
-                server.send_message(msg_customer)
-            
-            print("Emails envoyés avec succès")
-            
-        except Exception as e:
-            print(f"Erreur envoi email: {e}")
+        customer_sent = send_email_with_logs(
+            processed_data['email'], 
+            subject_customer, 
+            html_customer, 
+            smtp_config, 
+            "client AI"
+        )
+        
+        log_message(f"📧 Résumé envoi emails - Notification: {notification_sent}, Client: {customer_sent}")
         
         return jsonify({
             "status": "success",
             "message": "Lead traité avec succès pour EBUSINESS AI",
-            "data": processed_data
+            "data": processed_data,
+            "emails_sent": {
+                "notification": notification_sent,
+                "customer": customer_sent
+            }
         }), 200
         
     except Exception as e:
-        print(f"ERREUR WEBHOOK AI: {str(e)}")
+        log_message(f"❌ ERREUR WEBHOOK AI: {str(e)}")
         return jsonify({
             "status": "error",
             "message": f"Erreur lors du traitement: {str(e)}"
@@ -365,8 +409,31 @@ def webhook_ai():
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Endpoint de santé pour le monitoring"""
+    log_message("🏥 Health check demandé")
     return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()}), 200
 
+@app.route('/debug', methods=['POST'])
+def debug_endpoint():
+    """Endpoint de debug pour voir exactement ce qui est reçu"""
+    log_message("🔍 Debug endpoint appelé")
+    
+    debug_info = {
+        "method": request.method,
+        "content_type": request.content_type,
+        "headers": dict(request.headers),
+        "form_data": dict(request.form) if request.form else None,
+        "json_data": request.get_json() if request.is_json else None,
+        "raw_data": request.data.decode('utf-8') if request.data else None,
+        "args": dict(request.args)
+    }
+    
+    log_message(f"🔍 Debug info: {debug_info}")
+    
+    return jsonify({
+        "status": "debug",
+        "debug_info": debug_info
+    })
+
 if __name__ == '__main__':
+    log_message("🚀 Démarrage de l'application")
     app.run(debug=False, host='0.0.0.0', port=10000)
