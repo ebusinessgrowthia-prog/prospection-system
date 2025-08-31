@@ -32,26 +32,49 @@ EMAIL_AI = "ia.ebusinessag@gmail.com"
 # Configuration Gemini
 genai.configure(api_key=GEMINI_API_KEY)
 
-def extract_form_data_with_gemini(form_data):
+def extract_form_data_with_gemini(form_data, agency_type):
     """Utilise Gemini 2.0 Flash pour extraire et structurer les données du formulaire"""
     model = genai.GenerativeModel('gemini-2.0-flash-exp')
     
-    prompt = f"""
-    Tu es un assistant spécialisé dans l'extraction de données de formulaires. 
-    Analyse les données suivantes et extrait les informations pertinentes :
-    
-    Données brutes : {form_data}
-    
-    Extrais et retourne un JSON avec les champs suivants :
-    - nom: Nom complet de la personne
-    - email: Adresse email
-    - telephone: Numéro de téléphone
-    - service: Service demandé
-    - description: Description du projet
-    
-    Si un champ n'est pas trouvé, mets "Non spécifié".
-    Retourne uniquement le JSON, pas d'autre texte.
-    """
+    # Adapter le prompt en fonction du type d'agence
+    if agency_type == "EBUSINESS GROWTH":
+        prompt = f"""
+        Tu es un assistant spécialisé dans l'extraction de données de formulaires pour EBUSINESS GROWTH.
+        
+        Analyse les données du formulaire ci-dessous et extrais les informations pertinentes :
+        
+        Données brutes : {form_data}
+        
+        Extrais et retourne un JSON avec les champs suivants :
+        - nom: Nom complet de la personne
+        - email: Adresse email
+        - telephone: Numéro de téléphone
+        - service: Service demandé (généralement "Rétention & Relance B2B")
+        - description: Description du projet ou défi client
+        - societe: Nom de l'entreprise (si disponible)
+        
+        Si un champ n'est pas trouvé, mets "Non spécifié".
+        Retourne uniquement le JSON, pas d'autre texte.
+        """
+    else:  # EBUSINESS AI
+        prompt = f"""
+        Tu es un assistant spécialisé dans l'extraction de données de formulaires pour EBUSINESS AI.
+        
+        Analyse les données du formulaire ci-dessous et extrais les informations pertinentes :
+        
+        Données brutes : {form_data}
+        
+        Extrais et retourne un JSON avec les champs suivants :
+        - nom: Nom de l'entreprise (c'est le nom fourni dans le formulaire)
+        - email: Email professionnel
+        - url: URL du site e-commerce (si disponible)
+        - service: Service demandé (généralement "Audit IA")
+        - description: Description du principal enjeu
+        - telephone: Numéro de téléphone (si disponible)
+        
+        Si un champ n'est pas trouvé, mets "Non spécifié".
+        Retourne uniquement le JSON, pas d'autre texte.
+        """
     
     try:
         response = model.generate_content(prompt)
@@ -71,7 +94,9 @@ def extract_form_data_with_gemini(form_data):
             "email": "Non spécifié", 
             "telephone": "Non spécifié",
             "service": "Non spécifié",
-            "description": "Non spécifié"
+            "description": "Non spécifié",
+            "societe": "Non spécifié",
+            "url": "Non spécifié"
         }
 
 def send_email(to_email, subject, html_content, smtp_server, smtp_port, smtp_username, smtp_password, from_email=None):
@@ -128,6 +153,7 @@ def create_growth_notification_email(data):
                 <p><strong>Nom:</strong> {data.get('nom', 'Non spécifié')}</p>
                 <p><strong>Email:</strong> {data.get('email', 'Non spécifié')}</p>
                 <p><strong>Téléphone:</strong> {data.get('telephone', 'Non spécifié')}</p>
+                <p><strong>Société:</strong> {data.get('societe', 'Non spécifié')}</p>
                 <p><strong>Service demandé:</strong> {data.get('service', 'Non spécifié')}</p>
                 <p><strong>Description du projet:</strong></p>
                 <p>{data.get('description', 'Non spécifié')}</p>
@@ -170,8 +196,9 @@ def create_ai_notification_email(data):
             
             <div class="content">
                 <h2>Informations du Prospect</h2>
-                <p><strong>Nom:</strong> {data.get('nom', 'Non spécifié')}</p>
+                <p><strong>Entreprise:</strong> {data.get('nom', 'Non spécifié')}</p>
                 <p><strong>Email:</strong> {data.get('email', 'Non spécifié')}</p>
+                <p><strong>URL e-commerce:</strong> {data.get('url', 'Non spécifié')}</p>
                 <p><strong>Téléphone:</strong> {data.get('telephone', 'Non spécifié')}</p>
                 <p><strong>Service demandé:</strong> {data.get('service', 'Non spécifié')}</p>
                 <p><strong>Description du projet:</strong></p>
@@ -295,8 +322,12 @@ def webhook_growth():
         # Récupérer les données du formulaire
         form_data = request.form.to_dict() if request.form else request.get_json()
         
+        print(f"Données reçues pour GROWTH: {form_data}")  # Debug
+        
         # Extraire et structurer les données avec Gemini
-        processed_data = extract_form_data_with_gemini(form_data)
+        processed_data = extract_form_data_with_gemini(form_data, "EBUSINESS GROWTH")
+        
+        print(f"Données traitées pour GROWTH: {processed_data}")  # Debug
         
         # Créer l'email de notification pour l'agence
         subject_notification, html_notification = create_growth_notification_email(processed_data)
@@ -305,7 +336,7 @@ def webhook_growth():
         subject_customer, html_customer = create_growth_customer_email(processed_data)
         
         # Envoyer email de notification à l'agence
-        send_email(
+        email_sent = send_email(
             EMAIL_GROWTH, 
             subject_notification, 
             html_notification,
@@ -315,8 +346,10 @@ def webhook_growth():
             SMTP_GROWTH_PASSWORD
         )
         
+        print(f"Email notification GROWTH envoyé: {email_sent}")  # Debug
+        
         # Envoyer email de confirmation au client
-        send_email(
+        customer_email_sent = send_email(
             processed_data.get('email'), 
             subject_customer, 
             html_customer,
@@ -326,13 +359,20 @@ def webhook_growth():
             SMTP_GROWTH_PASSWORD
         )
         
+        print(f"Email client GROWTH envoyé: {customer_email_sent}")  # Debug
+        
         return jsonify({
             "status": "success",
             "message": "Lead traité avec succès pour EBUSINESS GROWTH",
-            "data": processed_data
+            "data": processed_data,
+            "emails_sent": {
+                "notification": email_sent,
+                "customer": customer_email_sent
+            }
         }), 200
         
     except Exception as e:
+        print(f"Erreur webhook GROWTH: {str(e)}")  # Debug
         return jsonify({
             "status": "error",
             "message": f"Erreur lors du traitement: {str(e)}"
@@ -345,8 +385,12 @@ def webhook_ai():
         # Récupérer les données du formulaire
         form_data = request.form.to_dict() if request.form else request.get_json()
         
+        print(f"Données reçues pour AI: {form_data}")  # Debug
+        
         # Extraire et structurer les données avec Gemini
-        processed_data = extract_form_data_with_gemini(form_data)
+        processed_data = extract_form_data_with_gemini(form_data, "EBUSINESS AI")
+        
+        print(f"Données traitées pour AI: {processed_data}")  # Debug
         
         # Créer l'email de notification pour l'agence
         subject_notification, html_notification = create_ai_notification_email(processed_data)
@@ -355,7 +399,7 @@ def webhook_ai():
         subject_customer, html_customer = create_ai_customer_email(processed_data)
         
         # Envoyer email de notification à l'agence
-        send_email(
+        email_sent = send_email(
             EMAIL_AI, 
             subject_notification, 
             html_notification,
@@ -365,8 +409,10 @@ def webhook_ai():
             SMTP_AI_PASSWORD
         )
         
+        print(f"Email notification AI envoyé: {email_sent}")  # Debug
+        
         # Envoyer email de confirmation au client
-        send_email(
+        customer_email_sent = send_email(
             processed_data.get('email'), 
             subject_customer, 
             html_customer,
@@ -376,13 +422,20 @@ def webhook_ai():
             SMTP_AI_PASSWORD
         )
         
+        print(f"Email client AI envoyé: {customer_email_sent}")  # Debug
+        
         return jsonify({
             "status": "success",
             "message": "Lead traité avec succès pour EBUSINESS AI",
-            "data": processed_data
+            "data": processed_data,
+            "emails_sent": {
+                "notification": email_sent,
+                "customer": customer_email_sent
+            }
         }), 200
         
     except Exception as e:
+        print(f"Erreur webhook AI: {str(e)}")  # Debug
         return jsonify({
             "status": "error",
             "message": f"Erreur lors du traitement: {str(e)}"
@@ -392,6 +445,43 @@ def webhook_ai():
 def health_check():
     """Endpoint de santé pour le monitoring"""
     return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()}), 200
+
+@app.route('/test-growth', methods=['GET', 'POST'])
+def test_growth():
+    """Endpoint de test pour EBUSINESS GROWTH"""
+    if request.method == 'POST':
+        return webhook_growth()
+    return """
+    <h1>Test EBUSINESS GROWTH</h1>
+    <form method="post">
+        <input type="text" name="nom" placeholder="Nom" required><br>
+        <input type="email" name="email" placeholder="Email" required><br>
+        <input type="tel" name="telephone" placeholder="Téléphone" required><br>
+        <input type="text" name="societe" placeholder="Société"><br>
+        <textarea name="description" placeholder="Description" required></textarea><br>
+        <input type="hidden" name="service" value="Rétention & Relance B2B">
+        <button type="submit">Tester</button>
+    </form>
+    """
+
+@app.route('/test-ai', methods=['GET', 'POST'])
+def test_ai():
+    """Endpoint de test pour EBUSINESS AI"""
+    if request.method == 'POST':
+        return webhook_ai()
+    return """
+    <h1>Test EBUSINESS AI</h1>
+    <form method="post">
+        <input type="text" name="nom" placeholder="Nom de l'entreprise" required><br>
+        <input type="email" name="email" placeholder="Email" required><br>
+        <input type="url" name="url" placeholder="URL du site" required><br>
+        <textarea name="description" placeholder="Description" required></textarea><br>
+        <input type="hidden" name="service" value="Audit IA">
+        <input type="hidden" name="telephone" value="Non spécifié">
+        <input type="hidden" name="societe" value="Non spécifié">
+        <button type="submit">Tester</button>
+    </form>
+    """
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=10000)
