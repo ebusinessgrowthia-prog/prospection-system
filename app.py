@@ -14,16 +14,16 @@ CORS(app, resources={r"/*": {"origins": ["*"], "methods": ["GET", "POST", "OPTIO
 # Configuration
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDlpgExpY2CqmPki0cb4dNRQICJKZ2i0TM')
 
-# Configuration SMTP - À METTRE À JOUR AVEC VOS NOUVEAUX MOTS DE PASSE
+# # Configuration SMTP - CORRIGÉ
 SMTP_GROWTH_SERVER = "smtp.gmail.com"
 SMTP_GROWTH_PORT = 587
 SMTP_GROWTH_USERNAME = "ebusinessgrowthai@gmail.com"
-SMTP_GROWTH_PASSWORD = "VOTRE_NOUVEAU_MOT_DE_PASSE_GROWTH"  # Mettre le nouveau mot de passe ici
+SMTP_GROWTH_PASSWORD = "bssi qnqy rdfz cchf"  # Gardez les espaces !
 
 SMTP_AI_SERVER = "smtp.gmail.com"
 SMTP_AI_PORT = 587
 SMTP_AI_USERNAME = "ia.ebusinessag@gmail.com"
-SMTP_AI_PASSWORD = "VOTRE_NOUVEAU_MOT_DE_PASSE_AI"  # Mettre le nouveau mot de passe ici
+SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy"  # Gardez les espaces !
 
 EMAIL_GROWTH = "ebusinessgrowthia@gmail.com"
 EMAIL_AI = "ia.ebusinessag@gmail.com"
