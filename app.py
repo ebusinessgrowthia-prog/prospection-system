@@ -14,16 +14,16 @@ CORS(app, resources={r"/*": {"origins": ["*"], "methods": ["GET", "POST", "OPTIO
 # Configuration
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDlpgExpY2CqmPki0cb4dNRQICJKZ2i0TM')
 
-# # Configuration SMTP - CORRIGÉ
+# Configuration SMTP - À METTRE À JOUR DANS RENDER
 SMTP_GROWTH_SERVER = "smtp.gmail.com"
 SMTP_GROWTH_PORT = 587
 SMTP_GROWTH_USERNAME = "ebusinessgrowthai@gmail.com"
-SMTP_GROWTH_PASSWORD = "bssi qnqy rdfz cchf"  # Gardez les espaces !
+SMTP_GROWTH_PASSWORD = "bssi qnqy rdfz cchf".replace(" ", "")  # À METTRE À JOUR
 
 SMTP_AI_SERVER = "smtp.gmail.com"
 SMTP_AI_PORT = 587
 SMTP_AI_USERNAME = "ia.ebusinessag@gmail.com"
-SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy"  # Gardez les espaces !
+SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy".replace(" ", "")  # À METTRE À JOUR
 
 EMAIL_GROWTH = "ebusinessgrowthia@gmail.com"
 EMAIL_AI = "ia.ebusinessag@gmail.com"
@@ -65,9 +65,16 @@ def send_email_with_logs(to_email, subject, html_content, smtp_config, email_typ
         log_message(f"❌ Erreur envoi email {email_type}: {str(e)}")
         return False
 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 def create_growth_notification_email(data):
-    """Crée l'email de notification pour EBUSINESS GROWTH avec le vrai template"""
-    subject = f"🚀 Nouveau Lead AUTOMATISATION - EBUSINESS GROWTH - {data.get('nom', 'Client')}"
+    """Crée l'email de notification pour EBUSINESS GROWTH"""
+    subject = f"🚀 Nouveau Lead AUTOMATISATION - EBUSINESS GROWTH - {data.get('nom', 'Non spécifié')}"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -91,13 +98,12 @@ def create_growth_notification_email(data):
             </div>
             
             <div class="content">
-                <h2>Informations du Prospect</h2>
                 <p><strong>Nom:</strong> {data.get('nom', 'Non spécifié')}</p>
                 <p><strong>Email:</strong> {data.get('email', 'Non spécifié')}</p>
                 <p><strong>Téléphone:</strong> {data.get('telephone', 'Non spécifié')}</p>
                 <p><strong>Société:</strong> {data.get('societe', 'Non spécifié')}</p>
-                <p><strong>Service demandé:</strong> {data.get('service', 'Non spécifié')}</p>
-                <p><strong>Description du projet:</strong></p>
+                <p><strong>Service:</strong> {data.get('service', 'Non spécifié')}</p>
+                <p><strong>Description:</strong></p>
                 <p>{data.get('description', 'Non spécifié')}</p>
             </div>
             
@@ -112,7 +118,7 @@ def create_growth_notification_email(data):
     return subject, html_content
 
 def create_growth_customer_email(data):
-    """Crée l'email de confirmation client pour EBUSINESS GROWTH avec le vrai template"""
+    """Crée l'email de confirmation client pour EBUSINESS GROWTH"""
     subject = "Votre réservation est confirmée ✅"
     
     html_content = f"""
@@ -130,16 +136,16 @@ def create_growth_customer_email(data):
             .steps li {{ margin: 10px 0; }}
             .highlight {{ background: #FFD700; color: #333; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }}
             .signature {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }}
+            .signature strong {{ color: #FFD700; }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>Votre réservation est confirmée ✅</h1>
+                <h1>{subject}</h1>
             </div>
-            
             <div class="content">
-                <p>Bonjour <strong>{data.get('nom', 'Client')}</strong>,</p>
+                <p>Bonjour <strong>{data.get('nom', '')}</strong>,</p>
                 <p>Votre réservation est confirmée.</p>
                 <p>Pour avancer efficacement, envoyez-nous votre CRM et tout document client pertinent dès maintenant. Plus vite nous aurons ces informations, plus vite nous réaliserons l'audit et vous fournirons un plan stratégique clair et actionnable.</p>
                 <p>Votre confidentialité est notre priorité. Vos données seront sécurisées et utilisées uniquement pour identifier les opportunités réelles au sein de votre entreprise.</p>
@@ -181,8 +187,8 @@ def create_growth_customer_email(data):
     return subject, html_content
 
 def create_ai_notification_email(data):
-    """Crée l'email de notification pour EBUSINESS AI avec le vrai template"""
-    subject = f"🤖 Nouveau Lead AUTOMATISATION - EBUSINESS AI - {data.get('nom', 'Client')}"
+    """Crée l'email de notification pour EBUSINESS AI"""
+    subject = f"🤖 Nouveau Lead AUTOMATISATION - EBUSINESS AI - {data.get('nom', 'Non spécifié')}"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -206,13 +212,12 @@ def create_ai_notification_email(data):
             </div>
             
             <div class="content">
-                <h2>Informations du Prospect</h2>
                 <p><strong>Entreprise:</strong> {data.get('nom', 'Non spécifié')}</p>
                 <p><strong>Email:</strong> {data.get('email', 'Non spécifié')}</p>
                 <p><strong>URL:</strong> {data.get('url', 'Non spécifié')}</p>
                 <p><strong>Téléphone:</strong> {data.get('telephone', 'Non spécifié')}</p>
-                <p><strong>Service demandé:</strong> {data.get('service', 'Non spécifié')}</p>
-                <p><strong>Description du projet:</strong></p>
+                <p><strong>Service:</strong> {data.get('service', 'Non spécifié')}</p>
+                <p><strong>Description:</strong></p>
                 <p>{data.get('description', 'Non spécifié')}</p>
             </div>
             
@@ -227,7 +232,7 @@ def create_ai_notification_email(data):
     return subject, html_content
 
 def create_ai_customer_email(data):
-    """Crée l'email de confirmation client pour EBUSINESS AI avec le vrai template"""
+    """Crée l'email de confirmation client pour EBUSINESS AI"""
     subject = "Votre demande d'audit e-commerce est confirmée ✅"
     
     html_content = f"""
@@ -245,17 +250,17 @@ def create_ai_customer_email(data):
             .list li {{ margin: 10px 0; }}
             .highlight {{ background: #000; color: #fff; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }}
             .signature {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }}
+            .signature strong {{ color: #000; }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>Votre demande d'audit e-commerce est confirmée ✅</h1>
+                <h1>{subject}</h1>
             </div>
-            
             <div class="content">
-                <p>Bonjour <strong>{data.get('nom', 'Client')}</strong>,</p>
-                <p>Votre demande d'audit gratuit a bien été enregistrée.</p>
+                <p>Bonjour <strong>{data.get('nom', '')}</strong>,</p>
+                <p>Votre demande d'audit e-commerce a bien été enregistrée.</p>
                 <p>Je suis Geraldo DOMINGO, et je tiens à vous confirmer personnellement que votre dossier fait désormais partie de mes priorités.</p>
                 
                 <p>Dans les 24-48h, vous recevrez une première analyse de votre profil e-commerce, un questionnaire personnalisé pour affiner l'audit, ainsi que les éléments techniques nécessaires pour l'analyse de vos données.</p>
@@ -273,13 +278,8 @@ def create_ai_customer_email(data):
                     "Je regarde d'abord vos chiffres. Ensuite, on discute."
                 </div>
                 
-                <p>Vous faites partie d'un processus sélectif où seuls les e-commerçants motivés par l'amélioration continue sont accompagnés. Votre engagement dans cette démarche est ce qui compte, pas la taille de votre entreprise.</p>
-                
-                <p>À très bientôt pour transformer vos données en opportunités concrètes.</p>
-            </div>
-            
-            <div class="signature">
-                <p>Cordialement,</p>
+                <p>Vous recevrez votre audit personnalisé sous 3 jours ouvrés.</p>
+                <p>Merci pour votre confiance,</p>
                 <p><strong>Geraldo DOMINGO</strong><br>
                 Expert IA & E-commerce<br>
                 Cotonou, Bénin<br>
@@ -292,13 +292,6 @@ def create_ai_customer_email(data):
     """
     
     return subject, html_content
-
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
 
 @app.route('/webhook/growth', methods=['POST', 'OPTIONS'])
 def webhook_growth():
@@ -329,6 +322,13 @@ def webhook_growth():
         
         log_message(f"✅ Données traitées: {processed_data}")
         
+        # Configuration SMTP pour GROWTH
+        smtp_config = {
+            'server': SMTP_GROWTH_SERVER,
+            'port': SMTP_GROWTH_PORT,
+            'username': SMTP_GROWTH_USERNAME,
+            'password': SMTP_GROWTH_PASSWORD
+        }
         
         # Créer et envoyer l'email de notification
         subject_notification, html_notification = create_growth_notification_email(processed_data)
@@ -345,7 +345,7 @@ def webhook_growth():
         customer_sent = send_email_with_logs(
             processed_data['email'], 
             subject_customer, 
-            html_customer, 
+            html_customer,
             smtp_config, 
             "client GROWTH"
         )
@@ -399,23 +399,20 @@ def webhook_ai():
         
         log_message(f"✅ Données traitées: {processed_data}")
         
-        # Configuration SMTP - CORRIGÉ
-SMTP_GROWTH_SERVER = "smtp.gmail.com"
-SMTP_GROWTH_PORT = 587
-SMTP_GROWTH_USERNAME = "ebusinessgrowthai@gmail.com"
-SMTP_GROWTH_PASSWORD = "bssi qnqy rdfz cchf"  # Gardez les espaces !
-
-SMTP_AI_SERVER = "smtp.gmail.com"
-SMTP_AI_PORT = 587
-SMTP_AI_USERNAME = "ia.ebusinessag@gmail.com"
-SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy"  # Gardez les espaces !
+        # Configuration SMTP pour AI
+        smtp_config = {
+            'server': SMTP_AI_SERVER,
+            'port': SMTP_AI_PORT,
+            'username': SMTP_AI_USERNAME,
+            'password': SMTP_AI_PASSWORD
+        }
         
         # Créer et envoyer l'email de notification
         subject_notification, html_notification = create_ai_notification_email(processed_data)
         notification_sent = send_email_with_logs(
             EMAIL_AI, 
             subject_notification, 
-            html_notification, 
+            html_notification,
             smtp_config, 
             "notification AI"
         )
@@ -425,7 +422,7 @@ SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy"  # Gardez les espaces !
         customer_sent = send_email_with_logs(
             processed_data['email'], 
             subject_customer, 
-            html_customer, 
+            html_customer,
             smtp_config, 
             "client AI"
         )
