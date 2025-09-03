@@ -40,8 +40,7 @@ class Config(BaseSettings):
         env="TARGET_SECTORS"
     )
     target_countries: List[str] = Field(
-        ["France", "Belgique", "Suisse", "Luxembourg", "Monaco", "Canada (Québec)", 
-         "Algérie", "Tunisie", "Maroc", "Sénégal", "Côte d'Ivoire", "Cameroun", "Mali"],
+        ["France", "Belgique", "Suisse", "Luxembourg", "Monaco", "Canada (Québec)"],
         env="TARGET_COUNTRIES"
     )
     min_company_size: int = Field(10000, env="MIN_COMPANY_SIZE")
@@ -133,12 +132,6 @@ class Config(BaseSettings):
             '"site e-commerce" "Québec" "expert"'
         ]
         
-        # Dorks pour l'Afrique francophone
-        africa_dorks = [
-            '"e-commerce" "francophone" "solution"',
-            '"boutique en ligne" "francophone" "expert"',
-            '"e-commerce" "Afrique" "shop"'
-        ]
         
         # Dorks par secteur
         sector_dorks = {
@@ -171,11 +164,6 @@ class Config(BaseSettings):
         
         if "Canada (Québec)" in self.target_countries:
             dorks.extend(quebec_dorks)
-        
-        # Ajouter les dorks pour l'Afrique francophone
-        african_countries = ["Algérie", "Tunisie", "Maroc", "Sénégal", "Côte d'Ivoire", "Cameroun", "Mali"]
-        if any(country in self.target_countries for country in african_countries):
-            dorks.extend(africa_dorks)
         
         # Ajouter les dorks par secteur
         for sector in self.target_sectors:
