@@ -1,0 +1,90 @@
+services:
+  - type: web
+    name: ebusiness-ai-prospection
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python src/main.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: MISTRAL_API_KEY
+        value: 6qbOzQH2oncVctSsHjNfiygavJ0anIFl
+      - key: EMAIL_ADDRESS
+        value: ia.ebusinessag@gmail.com
+      - key: EMAIL_PASSWORD
+        value: Gepdg2104Succes
+      - key: SERPAPI_API_KEY
+        value: 426a5404a500644a0d102fffc8bf984611dfc42aeff9e3d966e91f6189f1c700
+      - key: OPENAI_API_KEY
+        value: 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
+      - key: DATABASE_URL
+        value: sqlite:///data/prospects.db
+      - key: COMPANY_NAME
+        value: EBUSINESS AI
+      - key: YOUR_NAME
+        value: Geraldo Domingo
+      - key: YOUR_TITLE
+        value: Expert IA & E-commerce
+      - key: YOUR_LOCATION
+        value: Cotonou, Bénin
+      - key: TARGET_SECTORS
+        value: '["Mode", "Électronique", "Services", "Digital", "Retail"]'
+      - key: TARGET_COUNTRIES
+        value: '["France", "Belgique", "Suisse", "Luxembourg", "Monaco", "Canada (Québec)"]'
+      - key: MIN_COMPANY_SIZE
+        value: '10000'
+      - key: MAX_COMPANY_SIZE
+        value: '100000'
+      - key: EMAIL_SENDING_DAYS
+        value: '["tuesday", "wednesday", "thursday", "friday"]'
+      - key: EMAIL_SENDING_START
+        value: '9'
+      - key: EMAIL_SENDING_END
+        value: '17'
+      - key: TIMEZONE
+        value: Europe/Paris
+      - key: MAX_EMAILS_PER_DAY
+        value: '50'
+      - key: DELAY_BETWEEN_EMAILS
+        value: '30'
+      - key: SEARCH_FREQUENCY_HOURS
+        value: '2'
+      - key: LANDING_PAGE_URL
+        value: https://ebusinessag.com/gestion.html
+      - key: DEBUG_MODE
+        value: 'false'
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DASHBOARD_TITLE
+        value: '🚀 EBUSINESS AI - Automatisation de Prospection'
+      - key: PRIMARY_COLOR
+        value: '#667eea'
+      - key: SECONDARY_COLOR
+        value: '#764ba2'
+    healthCheckPath: /health
+    autoDeploy: true
+
+  - type: worker
+    name: ebusiness-ai-worker
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python src/scheduler/worker.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: MISTRAL_API_KEY
+        value: 6qbOzQH2oncVctSsHjNfiygavJ0anIFl
+      - key: EMAIL_ADDRESS
+        value: ia.ebusinessag@gmail.com
+      - key: EMAIL_PASSWORD
+        value: Gepdg2104Succes
+      - key: SERPAPI_API_KEY
+        value: 426a5404a500644a0d102fffc8bf984611dfc42aeff9e3d966e91f6189f1c700
+      - key: OPENAI_API_KEY
+        value: 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
+      - key: DATABASE_URL
+        value: sqlite:///data/prospects.db
+      - key: TIMEZONE
+        value: Europe/Paris
+      - key: LOG_LEVEL
+        value: INFO
