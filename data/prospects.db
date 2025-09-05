@@ -1,0 +1,897 @@
+"""
+Fichier de base de données SQLite pour EBUSINESS AI
+Ce fichier sera généré automatiquement par le système et contiendra toutes les données nécessaires
+"""
+
+import sqlite3
+import os
+import json
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+import logging
+
+# Configuration du logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+class EBUSINESSDatabase:
+    """Classe de gestion de la base de données EBUSINESS AI"""
+    
+    def __init__(self, db_path: str = "data/prospects.db"):
+        """
+        Initialise la base de données
+        
+        Args:
+            db_path: Chemin vers le fichier de base de données
+        """
+        self.db_path = db_path
+        self.connection = None
+        self.cursor = None
+        
+        # Créer le répertoire data s'il n'existe pas
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        
+        # Initialiser la base de données
+        self._initialize_database()
+    
+    def _initialize_database(self):
+        """Initialise la base de données avec toutes les tables nécessaires"""
+        try:
+            # Se connecter à la base de données
+            self.connection = sqlite3.connect(self.db_path)
+            self.cursor = self.connection.cursor()
+            
+            # Activer les contraintes de clé étrangère
+            self.cursor.execute("PRAGMA foreign_keys = ON")
+            
+            # Créer les tables
+            self._create_tables()
+            
+            # Créer les indexes
+            self._create_indexes()
+            
+            # Créer les triggers
+            self._create_triggers()
+            
+            # Créer les vues
+            self._create_views()
+            
+            # Insérer les données par défaut
+            self._insert_default_data()
+            
+            logger.info("Base de données initialisée avec succès")
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de l'initialisation de la base de données: {e}")
+            raise
+    
+    def _create_tables(self):
+        """Crée toutes les tables nécessaires"""
+        
+        # Table des prospects
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS prospects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            company TEXT NOT NULL,
+            email TEXT,
+            sector TEXT,
+            country TEXT,
+            website TEXT,
+            phone TEXT,
+            status TEXT DEFAULT 'nouveau' CHECK(status IN ('nouveau', 'qualifié', 'contacté', 'répondu', 'audit_réservé', 'inactif')),
+            qualification_score REAL DEFAULT 0.0 CHECK(qualification_score >= 0 AND qualification_score <= 10),
+            problem_detected TEXT,
+            specificity TEXT,
+            date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            date_contacted TIMESTAMP,
+            date_responded TIMESTAMP,
+            date_audit_booked TIMESTAMP,
+            email_sent BOOLEAN DEFAULT 0,
+            email_opened BOOLEAN DEFAULT 0,
+            email_clicked BOOLEAN DEFAULT 0,
+            email_opened_at TIMESTAMP,
+            email_clicked_at TIMESTAMP,
+            source TEXT DEFAULT 'google_dorks' CHECK(source IN ('google_dorks', 'linkedin', 'website_scraping', 'manual', 'import')),
+            raw_data TEXT,
+            last_contact_date TIMESTAMP,
+            response_time INTEGER,
+            notes TEXT
+        )
+        ''')
+        
+        # Table des campagnes email
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS email_campaigns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prospect_id INTEGER NOT NULL,
+            subject TEXT NOT NULL,
+            content TEXT NOT NULL,
+            sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            opened_at TIMESTAMP,
+            clicked_at TIMESTAMP,
+            tracking_id TEXT UNIQUE NOT NULL,
+            delivery_status TEXT DEFAULT 'sent' CHECK(delivery_status IN ('sent', 'delivered', 'opened', 'clicked', 'bounced', 'failed')),
+            bounce_reason TEXT,
+            spam_report BOOLEAN DEFAULT 0,
+            forwarded BOOLEAN DEFAULT 0,
+            FOREIGN KEY (prospect_id) REFERENCES prospects (id) ON DELETE CASCADE
+        )
+        ''')
+        
+        # Table des logs système
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS system_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            level TEXT NOT NULL CHECK(level IN ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')),
+            message TEXT NOT NULL,
+            module TEXT,
+            function TEXT,
+            line_number INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            extra_data TEXT,
+            user_id TEXT,
+            session_id TEXT,
+            request_id TEXT
+        )
+        ''')
+        
+        # Table des templates d'email
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS email_templates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            subject_template TEXT NOT NULL,
+            content_template TEXT NOT NULL,
+            language TEXT DEFAULT 'fr' CHECK(language IN ('fr', 'en')),
+            category TEXT DEFAULT 'audit',
+            is_active BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT
+        )
+        ''')
+        
+        # Table des tâches planifiées
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS scheduled_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_name TEXT NOT NULL,
+            task_type TEXT NOT NULL CHECK(task_type IN ('search', 'qualify', 'send', 'cleanup')),
+            status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'running', 'completed', 'failed')),
+            scheduled_at TIMESTAMP NOT NULL,
+            started_at TIMESTAMP,
+            completed_at TIMESTAMP,
+            result TEXT,
+            error_message TEXT,
+            retry_count INTEGER DEFAULT 0,
+            max_retries INTEGER DEFAULT 3,
+            next_run_at TIMESTAMP,
+            is_active BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+        
+        # Table des performances
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS performance_metrics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            metric_name TEXT NOT NULL,
+            metric_value REAL NOT NULL,
+            metric_date DATE NOT NULL,
+            dimension TEXT,
+            dimension_value TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+        
+        # Table des configurations
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS app_config (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            description TEXT,
+            is_sensitive BOOLEAN DEFAULT 0,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_by TEXT
+        )
+        ''')
+        
+        # Table des exports
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS exports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_name TEXT NOT NULL,
+            file_type TEXT NOT NULL CHECK(file_type IN ('csv', 'excel', 'json')),
+            export_type TEXT NOT NULL CHECK(export_type IN ('prospects', 'campaigns', 'logs', 'stats')),
+            record_count INTEGER DEFAULT 0,
+            file_path TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT
+        )
+        ''')
+        
+        logger.info("Tables créées avec succès")
+    
+    def _create_indexes(self):
+        """Crée les indexes pour optimiser les performances"""
+        
+        # Index pour la table prospects
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_prosects_status ON prospects(status)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_prosects_email ON prospects(email)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_prosects_company ON prospects(company)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_prosects_qualification_score ON prospects(qualification_score)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_prosects_date_added ON prospects(date_added)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_prosects_country ON prospects(country)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_prosects_sector ON prospects(sector)")
+        
+        # Index pour la table email_campaigns
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_campaigns_prospect_id ON email_campaigns(prospect_id)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_campaigns_tracking_id ON email_campaigns(tracking_id)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_campaigns_sent_at ON email_campaigns(sent_at)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_campaigns_delivery_status ON email_campaigns(delivery_status)")
+        
+        # Index pour la table system_logs
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_level ON system_logs(level)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_created_at ON system_logs(created_at)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_module ON system_logs(module)")
+        
+        # Index pour la table scheduled_tasks
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON scheduled_tasks(status)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_tasks_scheduled_at ON scheduled_tasks(scheduled_at)")
+        
+        # Index pour la table performance_metrics
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_metrics_name_date ON performance_metrics(metric_name, metric_date)")
+        
+        # Index pour la table email_templates
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_templates_language ON email_templates(language)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_templates_category ON email_templates(category)")
+        
+        logger.info("Indexes créés avec succès")
+    
+    def _create_triggers(self):
+        """Crée les triggers pour la mise à jour automatique des timestamps"""
+        
+        # Trigger pour mettre à jour last_contact_date quand un prospect est contacté
+        self.cursor.execute('''
+        CREATE TRIGGER IF NOT EXISTS update_prospect_contact_date
+        AFTER UPDATE ON prospects
+        FOR EACH ROW
+        WHEN NEW.date_contacted IS NOT NULL AND (OLD.date_contacted IS NULL OR NEW.date_contacted != OLD.date_contacted)
+        BEGIN
+            UPDATE prospects SET last_contact_date = CURRENT_TIMESTAMP WHERE id = NEW.id;
+        END
+        ''')
+        
+        # Trigger pour mettre à jour le timestamp des templates
+        self.cursor.execute('''
+        CREATE TRIGGER IF NOT EXISTS update_template_timestamp
+        AFTER UPDATE ON email_templates
+        FOR EACH ROW
+        BEGIN
+            UPDATE email_templates SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+        END
+        ''')
+        
+        # Trigger pour logger les changements de statut des prospects
+        self.cursor.execute('''
+        CREATE TRIGGER IF NOT EXISTS log_prospect_status_change
+        AFTER UPDATE ON prospects
+        FOR EACH ROW
+        WHEN NEW.status != OLD.status
+        BEGIN
+            INSERT INTO system_logs (level, message, module, extra_data)
+            VALUES (
+                'INFO',
+                'Statut du prospect changé de ' || OLD.status || ' à ' || NEW.status,
+                'prospects',
+                json_object('prospect_id', NEW.id, 'old_status', OLD.status, 'new_status', NEW.status)
+            );
+        END
+        ''')
+        
+        logger.info("Triggers créés avec succès")
+    
+    def _create_views(self):
+        """Crée les vues pour des requêtes courantes"""
+        
+        # Vue des statistiques des prospects
+        self.cursor.execute('''
+        CREATE VIEW IF NOT EXISTS vw_prospect_stats AS
+        SELECT 
+            status,
+            COUNT(*) as count,
+            AVG(qualification_score) as avg_score,
+            MIN(qualification_score) as min_score,
+            MAX(qualification_score) as max_score
+        FROM prospects
+        GROUP BY status
+        ''')
+        
+        # Vue des statistiques des campagnes
+        self.cursor.execute('''
+        CREATE VIEW IF NOT EXISTS vw_campaign_stats AS
+        SELECT 
+            DATE(sent_at) as sent_date,
+            COUNT(*) as sent_count,
+            SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as opened_count,
+            SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as clicked_count,
+            ROUND(SUM(CASE WHEN opened_at IS NOT NULL THEN 1.0 ELSE 0.0 END) / COUNT(*) * 100, 2) as open_rate,
+            ROUND(SUM(CASE WHEN clicked_at IS NOT NULL THEN 1.0 ELSE 0.0 END) / 
+                  CASE WHEN SUM(CASE WHEN opened_at IS NOT NULL THEN 1.0 ELSE 0.0 END) > 0 
+                       THEN SUM(CASE WHEN opened_at IS NOT NULL THEN 1.0 ELSE 0.0 END) 
+                       ELSE 1 END * 100, 2) as click_rate
+        FROM email_campaigns
+        GROUP BY DATE(sent_at)
+        ''')
+        
+        # Vue de performance des prospects
+        self.cursor.execute('''
+        CREATE VIEW IF NOT EXISTS vw_prospect_performance AS
+        SELECT 
+            p.id,
+            p.name,
+            p.company,
+            p.sector,
+            p.country,
+            p.status,
+            p.qualification_score,
+            ec.subject,
+            ec.sent_at,
+            ec.opened_at,
+            ec.clicked_at,
+            CASE WHEN ec.opened_at IS NOT NULL THEN 1 ELSE 0 END as email_opened,
+            CASE WHEN ec.clicked_at IS NOT NULL THEN 1 ELSE 0 END as email_clicked,
+            CASE WHEN ec.opened_at IS NOT NULL THEN 
+                 JULIANDAY(ec.opened_at) - JULIANDAY(ec.sent_at) 
+            ELSE NULL END as days_to_open
+        FROM prospects p
+        LEFT JOIN email_campaigns ec ON p.id = ec.prospect_id
+        ''')
+        
+        # Vue des activités récentes
+        self.cursor.execute('''
+        CREATE VIEW IF NOT EXISTS vw_recent_activity AS
+        SELECT 
+            'prospect' as activity_type,
+            p.id as item_id,
+            p.name as title,
+            p.date_added as timestamp,
+            p.status as status
+        FROM prospects p
+        UNION ALL
+        SELECT 
+            'campaign' as activity_type,
+            ec.id as item_id,
+            ec.subject as title,
+            ec.sent_at as timestamp,
+            ec.delivery_status as status
+        FROM email_campaigns ec
+        ORDER BY timestamp DESC
+        LIMIT 50
+        ''')
+        
+        logger.info("Vues créées avec succès")
+    
+    def _insert_default_data(self):
+        """Insère les données par défaut"""
+        
+        # Configurations par défaut
+        default_configs = [
+            ('app_name', 'EBUSINESS AI', 'Nom de l\'application', 0),
+            ('app_version', '1.0.0', 'Version de l\'application', 0),
+            ('max_emails_per_day', '50', 'Nombre maximum d\'emails par jour', 0),
+            ('delay_between_emails', '30', 'Délai entre les emails en secondes', 0),
+            ('search_frequency_hours', '2', 'Fréquence de recherche en heures', 0),
+            ('email_sending_days', '["tuesday", "wednesday", "thursday", "friday"]', 'Jours d\'envoi d\'emails', 0),
+            ('email_sending_start', '9', 'Heure de début d\'envoi', 0),
+            ('email_sending_end', '17', 'Heure de fin d\'envoi', 0),
+            ('timezone', 'Europe/Paris', 'Fuseau horaire', 0),
+            ('target_sectors', '["Mode", "Électronique", "Services", "Digital", "Retail"]', 'Secteurs cibles', 0),
+            ('target_countries', '["France", "Belgique", "Suisse", "Luxembourg", "Monaco", "Canada (Québec)"]', 'Pays cibles', 0),
+            ('min_company_size', '10000', 'Taille minimale d\'entreprise', 0),
+            ('max_company_size', '100000', 'Taille maximale d\'entreprise', 0),
+            ('debug_mode', 'false', 'Mode de débogage', 0),
+            ('log_level', 'INFO', 'Niveau de log', 0),
+            ('landing_page_url', 'https://ebusinessag.com/gestion.html', 'URL de la page d\'atterrissage', 0)
+        ]
+        
+        for key, value, description, is_sensitive in default_configs:
+            self.cursor.execute('''
+            INSERT OR IGNORE INTO app_config (key, value, description, is_sensitive)
+            VALUES (?, ?, ?, ?)
+            ''', (key, value, description, is_sensitive))
+        
+        # Templates d'email par défaut
+        default_templates = [
+            ('Audit FR', 
+             'Proposition d\'audit gratuit pour {company}', 
+             'Cher {name},\n\nJ\'ai remarqué que votre entreprise {company} dans le secteur {sector} pourrait bénéficier d\'un audit gratuit de sa présence en ligne.\n\n{problem}\n\nJe vous propose une analyse complète de :\n- Votre stratégie de contenu\n- Votre référencement naturel\n- L\'expérience utilisateur\n- Les opportunités d\'amélioration\n\nCet audit est sans engagement et vous donnera des pistes concrètes pour augmenter votre chiffre d\'affaires.\n\nSouhaitez-vous que je vous prépare une proposition détaillée ?\n\nCordialement,\n{your_name}\n{your_title}\n{your_location}\n\n{landing_page}', 
+             'fr', 'audit', 1),
+            ('Audit EN', 
+             'Free audit proposal for {company}', 
+             'Dear {name},\n\nI noticed that your company {company} in the {sector} sector could benefit from a free audit of its online presence.\n\n{problem}\n\nI offer you a complete analysis of:\n- Your content strategy\n- Your natural referencing\n- The user experience\n- Improvement opportunities\n\nThis audit is without commitment and will give you concrete ways to increase your revenue.\n\nWould you like me to prepare a detailed proposal?\n\nBest regards,\n{your_name}\n{your_title}\n{your_location}\n\n{landing_page}', 
+             'en', 'audit', 1)
+        ]
+        
+        for name, subject, content, language, category, is_active in default_templates:
+            self.cursor.execute('''
+            INSERT OR IGNORE INTO email_templates (name, subject_template, content_template, language, category, is_active)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ''', (name, subject, content, language, category, is_active))
+        
+        logger.info("Données par défaut insérées avec succès")
+    
+    def get_connection(self):
+        """Retourne une connexion à la base de données"""
+        if not self.connection:
+            self.connection = sqlite3.connect(self.db_path)
+            self.cursor = self.connection.cursor()
+            self.cursor.execute("PRAGMA foreign_keys = ON")
+        return self.connection
+    
+    def close_connection(self):
+        """Ferme la connexion à la base de données"""
+        if self.connection:
+            self.connection.close()
+            self.connection = None
+            self.cursor = None
+    
+    def execute_query(self, query: str, params: tuple = None):
+        """
+        Exécute une requête SQL
+        
+        Args:
+            query: Requête SQL à exécuter
+            params: Paramètres de la requête
+            
+        Returns:
+            Résultats de la requête
+        """
+        conn = self.get_connection()
+        try:
+            if params:
+                self.cursor.execute(query, params)
+            else:
+                self.cursor.execute(query)
+            
+            if query.strip().upper().startswith(('SELECT', 'PRAGMA')):
+                return self.cursor.fetchall()
+            else:
+                conn.commit()
+                return self.cursor.rowcount
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Erreur lors de l'exécution de la requête: {e}")
+            raise
+    
+    def add_prospect(self, prospect_data: Dict[str, Any]) -> Optional[int]:
+        """
+        Ajoute un nouveau prospect à la base de données
+        
+        Args:
+            prospect_data: Données du prospect
+            
+        Returns:
+            ID du prospect ajouté ou None si échec
+        """
+        query = '''
+        INSERT INTO prospects (name, company, email, sector, country, website, status, qualification_score, problem_detected, specificity, source)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        '''
+        
+        params = (
+            prospect_data.get('name'),
+            prospect_data.get('company'),
+            prospect_data.get('email'),
+            prospect_data.get('sector'),
+            prospect_data.get('country'),
+            prospect_data.get('website'),
+            prospect_data.get('status', 'nouveau'),
+            prospect_data.get('qualification_score', 0.0),
+            prospect_data.get('problem_detected'),
+            prospect_data.get('specificity'),
+            prospect_data.get('source', 'google_dorks')
+        )
+        
+        try:
+            self.execute_query(query, params)
+            return self.cursor.lastrowid
+        except Exception as e:
+            logger.error(f"Erreur lors de l'ajout du prospect: {e}")
+            return None
+    
+    def get_prospect(self, prospect_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Récupère un prospect par son ID
+        
+        Args:
+            prospect_id: ID du prospect
+            
+        Returns:
+            Données du prospect ou None si non trouvé
+        """
+        query = 'SELECT * FROM prospects WHERE id = ?'
+        params = (prospect_id,)
+        
+        try:
+            result = self.execute_query(query, params)
+            if result:
+                columns = [desc[0] for desc in self.cursor.description]
+                return dict(zip(columns, result[0]))
+            return None
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération du prospect: {e}")
+            return None
+    
+    def update_prospect(self, prospect_id: int, update_data: Dict[str, Any]) -> bool:
+        """
+        Met à jour un prospect
+        
+        Args:
+            prospect_id: ID du prospect
+            update_data: Données à mettre à jour
+            
+        Returns:
+            True si la mise à jour a réussi, False sinon
+        """
+        # Construire la requête de mise à jour dynamiquement
+        set_clause = []
+        params = []
+        
+        for key, value in update_data.items():
+            set_clause.append(f"{key} = ?")
+            params.append(value)
+        
+        if not set_clause:
+            return False
+        
+        set_clause = ", ".join(set_clause)
+        query = f'UPDATE prospects SET {set_clause} WHERE id = ?'
+        params.append(prospect_id)
+        
+        try:
+            rows_affected = self.execute_query(query, tuple(params))
+            return rows_affected > 0
+        except Exception as e:
+            logger.error(f"Erreur lors de la mise à jour du prospect: {e}")
+            return False
+    
+    def get_prospects(self, status: str = None, limit: int = None) -> List[Dict[str, Any]]:
+        """
+        Récupère la liste des prospects
+        
+        Args:
+            status: Filtrer par statut
+            limit: Limiter le nombre de résultats
+            
+        Returns:
+            Liste des prospects
+        """
+        query = 'SELECT * FROM prospects'
+        params = []
+        
+        if status:
+            query += ' WHERE status = ?'
+            params.append(status)
+        
+        query += ' ORDER BY date_added DESC'
+        
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+        
+        try:
+            results = self.execute_query(query, tuple(params) if params else None)
+            if results:
+                columns = [desc[0] for desc in self.cursor.description]
+                return [dict(zip(columns, row)) for row in results]
+            return []
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des prospects: {e}")
+            return []
+    
+    def add_email_campaign(self, campaign_data: Dict[str, Any]) -> Optional[int]:
+        """
+        Ajoute une campagne email à la base de données
+        
+        Args:
+            campaign_data: Données de la campagne
+            
+        Returns:
+            ID de la campagne ajoutée ou None si échec
+        """
+        query = '''
+        INSERT INTO email_campaigns (prospect_id, subject, content, tracking_id)
+        VALUES (?, ?, ?, ?)
+        '''
+        
+        params = (
+            campaign_data.get('prospect_id'),
+            campaign_data.get('subject'),
+            campaign_data.get('content'),
+            campaign_data.get('tracking_id')
+        )
+        
+        try:
+            self.execute_query(query, params)
+            return self.cursor.lastrowid
+        except Exception as e:
+            logger.error(f"Erreur lors de l'ajout de la campagne: {e}")
+            return None
+    
+    def get_email_campaign(self, campaign_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Récupère une campagne email par son ID
+        
+        Args:
+            campaign_id: ID de la campagne
+            
+        Returns:
+            Données de la campagne ou None si non trouvée
+        """
+        query = 'SELECT * FROM email_campaigns WHERE id = ?'
+        params = (campaign_id,)
+        
+        try:
+            result = self.execute_query(query, params)
+            if result:
+                columns = [desc[0] for desc in self.cursor.description]
+                return dict(zip(columns, result[0]))
+            return None
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération de la campagne: {e}")
+            return None
+    
+    def update_email_campaign(self, campaign_id: int, update_data: Dict[str, Any]) -> bool:
+        """
+        Met à jour une campagne email
+        
+        Args:
+            campaign_id: ID de la campagne
+            update_data: Données à mettre à jour
+            
+        Returns:
+            True si la mise à jour a réussi, False sinon
+        """
+        # Construire la requête de mise à jour dynamiquement
+        set_clause = []
+        params = []
+        
+        for key, value in update_data.items():
+            set_clause.append(f"{key} = ?")
+            params.append(value)
+        
+        if not set_clause:
+            return False
+        
+        set_clause = ", ".join(set_clause)
+        query = f'UPDATE email_campaigns SET {set_clause} WHERE id = ?'
+        params.append(campaign_id)
+        
+        try:
+            rows_affected = self.execute_query(query, tuple(params))
+            return rows_affected > 0
+        except Exception as e:
+            logger.error(f"Erreur lors de la mise à jour de la campagne: {e}")
+            return False
+    
+    def get_system_stats(self) -> Dict[str, Any]:
+        """
+        Récupère les statistiques système
+        
+        Returns:
+            Statistiques système
+        """
+        try:
+            # Statistiques des prospects
+            prospect_stats = self.execute_query("SELECT status, COUNT(*) FROM prospects GROUP BY status")
+            
+            # Statistiques des campagnes
+            campaign_stats = self.execute_query("SELECT delivery_status, COUNT(*) FROM email_campaigns GROUP BY delivery_status")
+            
+            # Statistiques par pays
+            country_stats = self.execute_query("SELECT country, COUNT(*) FROM prospects WHERE country IS NOT NULL GROUP BY country")
+            
+            # Statistiques par secteur
+            sector_stats = self.execute_query("SELECT sector, COUNT(*) FROM prospects WHERE sector IS NOT NULL GROUP BY sector")
+            
+            return {
+                'prospects': {row[0]: row[1] for row in prospect_stats},
+                'campaigns': {row[0]: row[1] for row in campaign_stats},
+                'by_country': {row[0]: row[1] for row in country_stats},
+                'by_sector': {row[0]: row[1] for row in sector_stats}
+            }
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des statistiques: {e}")
+            return {}
+    
+    def log_system_event(self, level: str, message: str, module: str = None, extra_data: Dict[str, Any] = None):
+        """
+        Ajoute un événement système au log
+        
+        Args:
+            level: Niveau de log
+            message: Message du log
+            module: Module concerné
+            extra_data: Données supplémentaires
+        """
+        query = '''
+        INSERT INTO system_logs (level, message, module, extra_data)
+        VALUES (?, ?, ?, ?)
+        '''
+        
+        params = (
+            level,
+            message,
+            module,
+            json.dumps(extra_data) if extra_data else None
+        )
+        
+        try:
+            self.execute_query(query, params)
+        except Exception as e:
+            logger.error(f"Erreur lors de l'ajout du log système: {e}")
+    
+    def cleanup_old_logs(self, days_to_keep: int = 30) -> int:
+        """
+        Nettoie les anciens logs système
+        
+        Args:
+            days_to_keep: Nombre de jours à conserver
+            
+        Returns:
+            Nombre de logs supprimés
+        """
+        query = "DELETE FROM system_logs WHERE created_at < datetime('now', '-' || ? || ' days')"
+        params = (days_to_keep,)
+        
+        try:
+            rows_affected = self.execute_query(query, params)
+            logger.info(f"{rows_affected} logs système supprimés")
+            return rows_affected
+        except Exception as e:
+            logger.error(f"Erreur lors du nettoyage des logs: {e}")
+            return 0
+    
+    def backup_database(self, backup_path: str) -> bool:
+        """
+        Sauvegarde la base de données
+        
+        Args:
+            backup_path: Chemin de la sauvegarde
+            
+        Returns:
+            True si la sauvegarde a réussi, False sinon
+        """
+        try:
+            import shutil
+            shutil.copy2(self.db_path, backup_path)
+            logger.info(f"Base de données sauvegardée vers {backup_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Erreur lors de la sauvegarde de la base de données: {e}")
+            return False
+    
+    def restore_database(self, backup_path: str) -> bool:
+        """
+        Restaure la base de données depuis une sauvegarde
+        
+        Args:
+            backup_path: Chemin de la sauvegarde
+            
+        Returns:
+            True si la restauration a réussi, False sinon
+        """
+        try:
+            import shutil
+            shutil.copy2(backup_path, self.db_path)
+            logger.info(f"Base de données restaurée depuis {backup_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Erreur lors de la restauration de la base de données: {e}")
+            return False
+    
+    def get_database_info(self) -> Dict[str, Any]:
+        """
+        Récupère des informations sur la base de données
+        
+        Returns:
+            Informations sur la base de données
+        """
+        try:
+            import os
+            
+            # Taille de la base de données
+            size = os.path.getsize(self.db_path)
+            
+            # Nombre de tables
+            tables = self.execute_query("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
+            table_count = tables[0][0] if tables else 0
+            
+            # Nombre de vues
+            views = self.execute_query("SELECT COUNT(*) FROM sqlite_master WHERE type='view'")
+            view_count = views[0][0] if views else 0
+            
+            # Nombre d'indexes
+            indexes = self.execute_query("SELECT COUNT(*) FROM sqlite_master WHERE type='index'")
+            index_count = indexes[0][0] if indexes else 0
+            
+            # Nombre de triggers
+            triggers = self.execute_query("SELECT COUNT(*) FROM sqlite_master WHERE type='trigger'")
+            trigger_count = triggers[0][0] if triggers else 0
+            
+            # Nombre de prospects
+            prospects = self.execute_query("SELECT COUNT(*) FROM prospects")
+            prospect_count = prospects[0][0] if prospects else 0
+            
+            # Nombre de campagnes
+            campaigns = self.execute_query("SELECT COUNT(*) FROM email_campaigns")
+            campaign_count = campaigns[0][0] if campaigns else 0
+            
+            return {
+                'file_path': self.db_path,
+                'size_bytes': size,
+                'size_mb': round(size / (1024 * 1024), 2),
+                'table_count': table_count,
+                'view_count': view_count,
+                'index_count': index_count,
+                'trigger_count': trigger_count,
+                'prospect_count': prospect_count,
+                'campaign_count': campaign_count
+            }
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des informations de la base de données: {e}")
+            return {}
+
+# Instance globale de la base de données
+db = EBUSINESSDatabase()
+
+# Fonctions utilitaires pour la compatibilité
+def get_database_connection():
+    """Retourne une connexion à la base de données"""
+    return db.get_connection()
+
+def add_prospect(prospect_data: Dict[str, Any]) -> Optional[int]:
+    """Ajoute un prospect à la base de données"""
+    return db.add_prospect(prospect_data)
+
+def get_prospect(prospect_id: int) -> Optional[Dict[str, Any]]:
+    """Récupère un prospect par son ID"""
+    return db.get_prospect(prospect_id)
+
+def update_prospect(prospect_id: int, update_data: Dict[str, Any]) -> bool:
+    """Met à jour un prospect"""
+    return db.update_prospect(prospect_id, update_data)
+
+def get_prospects(status: str = None, limit: int = None) -> List[Dict[str, Any]]:
+    """Récupère la liste des prospects"""
+    return db.get_prospects(status, limit)
+
+def add_email_campaign(campaign_data: Dict[str, Any]) -> Optional[int]:
+    """Ajoute une campagne email"""
+    return db.add_email_campaign(campaign_data)
+
+def get_email_campaign(campaign_id: int) -> Optional[Dict[str, Any]]:
+    """Récupère une campagne email par son ID"""
+    return db.get_email_campaign(campaign_id)
+
+def update_email_campaign(campaign_id: int, update_data: Dict[str, Any]) -> bool:
+    """Met à jour une campagne email"""
+    return db.update_email_campaign(campaign_id, update_data)
+
+def get_system_stats() -> Dict[str, Any]:
+    """Récupère les statistiques système"""
+    return db.get_system_stats()
+
+def log_system_event(level: str, message: str, module: str = None, extra_data: Dict[str, Any] = None):
+    """Ajoute un événement système au log"""
+    db.log_system_event(level, message, module, extra_data)
+
+def cleanup_old_logs(days_to_keep: int = 30) -> int:
+    """Nettoie les anciens logs système"""
+    return db.cleanup_old_logs(days_to_keep)
+
+def get_database_info() -> Dict[str, Any]:
+    """Récupère des informations sur la base de données"""
+    return db.get_database_info()
