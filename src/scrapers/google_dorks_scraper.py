@@ -318,13 +318,7 @@ class GoogleDorksScraper:
                 "Luxembourg": ["luxembourg", "luxembourgeois", ".lu"],
                 "Monaco": ["monaco", "monégasque", ".mc"],
                 "Canada (Québec)": ["québec", "quebec", "canada", "montréal", "toronto", ".ca"],
-                "Algérie": ["algérie", "algerie", "alger", "oran", ".dz"],
-                "Tunisie": ["tunisie", "tunis", "sfax", ".tn"],
-                "Maroc": ["maroc", "casablanca", "rabat", "marrakech", ".ma"],
-                "Sénégal": ["sénégal", "senegal", "dakar", ".sn"],
-                "Côte d'Ivoire": ["côte d'ivoire", "cote d'ivoire", "abidjan", ".ci"],
-                "Cameroun": ["cameroun", "cameroon", "douala", "yaoundé", ".cm"],
-                "Mali": ["mali", "bamako", ".ml"]
+                
             }
             
             # Compter les occurrences de mots-clés par pays
