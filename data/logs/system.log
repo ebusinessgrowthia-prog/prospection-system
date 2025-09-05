@@ -1,0 +1,429 @@
+"""
+Fichier de log système pour EBUSINESS AI
+Ce fichier sera généré automatiquement et contiendra tous les événements système
+"""
+
+import logging
+import os
+import sys
+from datetime import datetime
+from typing import Dict, Any, Optional
+import json
+
+# Import des modules locaux
+from src.core.database import get_database_connection, log_system_event
+from src.core.utils import get_logger
+
+# Configuration du logging
+logger = get_logger(__name__)
+
+class SystemLogger:
+    """Classe de gestion des logs système"""
+    
+    def __init__(self, log_file_path: str = "data/logs/system.log"):
+        """
+        Initialise le logger système
+        
+        Args:
+            log_file_path: Chemin vers le fichier de log
+        """
+        self.log_file_path = log_file_path
+        
+        # Créer le répertoire des logs s'il n'existe pas
+        os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+        
+        # Configurer le logger
+        self._setup_logger()
+    
+    def _setup_logger(self):
+        """Configure le logger système"""
+        # Créer un logger spécifique pour le système
+        self.logger = logging.getLogger('ebusiness_system')
+        
+        # Définir le niveau de log
+        self.logger.setLevel(logging.DEBUG)
+        
+        # Créer un formateur
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        
+        # Créer un handler pour le fichier
+        file_handler = logging.FileHandler(self.log_file_path)
+        file_handler.setFormatter(formatter)
+        
+        # Créer un handler pour la console
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        
+        # Ajouter les handlers au logger
+        self.logger.addHandler(file_handler)
+        self.logger.addHandler(console_handler)
+        
+        # Empêcher la propagation aux loggers parents
+        self.logger.propagate = False
+    
+    def log_event(self, level: str, message: str, module: str = None, 
+                 function: str = None, line_number: int = None, 
+                 extra_data: Dict[str, Any] = None):
+        """
+        Enregistre un événement dans le log système
+        
+        Args:
+            level: Niveau de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            message: Message du log
+            module: Module concerné
+            function: Fonction concernée
+            line_number: Numéro de ligne
+            extra_data: Données supplémentaires
+        """
+        # Créer un dictionnaire avec les informations de l'événement
+        event_data = {
+            'timestamp': datetime.now().isoformat(),
+            'level': level,
+            'message': message,
+            'module': module,
+            'function': function,
+            'line_number': line_number,
+            'extra_data': extra_data
+        }
+        
+        # Enregistrer dans le fichier de log
+        if level.upper() == 'DEBUG':
+            self.logger.debug(message, extra={'event_data': event_data})
+        elif level.upper() == 'INFO':
+            self.logger.info(message, extra={'event_data': event_data})
+        elif level.upper() == 'WARNING':
+            self.logger.warning(message, extra={'event_data': event_data})
+        elif level.upper() == 'ERROR':
+            self.logger.error(message, extra={'event_data': event_data})
+        elif level.upper() == 'CRITICAL':
+            self.logger.critical(message, extra={'event_data': event_data})
+        
+        # Enregistrer dans la base de données
+        log_system_event(level, message, module, event_data)
+    
+    def log_scraping_event(self, message: str, url: str = None, 
+                        emails_found: int = 0, error: str = None):
+        """
+        Enregistre un événement de scraping
+        
+        Args:
+            message: Message du log
+            url: URL concernée
+            emails_found: Nombre d'emails trouvés
+            error: Erreur rencontrée
+        """
+        extra_data = {
+            'url': url,
+            'emails_found': emails_found,
+            'error': error,
+            'event_type': 'scraping'
+        }
+        
+        if error:
+            self.log_event('ERROR', message, 'scrapers', extra_data=extra_data)
+        else:
+            self.log_event('INFO', message, 'scrapers', extra_data=extra_data)
+    
+    def log_email_event(self, message: str, prospect_id: int = None, 
+                      email_address: str = None, tracking_id: str = None):
+        """
+        Enregistre un événement email
+        
+        Args:
+            message: Message du log
+            prospect_id: ID du prospect
+            email_address: Adresse email
+            tracking_id: ID de suivi
+        """
+        extra_data = {
+            'prospect_id': prospect_id,
+            'email_address': email_address,
+            'tracking_id': tracking_id,
+            'event_type': 'email'
+        }
+        
+        self.log_event('INFO', message, 'email', extra_data=extra_data)
+    
+    def log_qualification_event(self, message: str, prospect_id: int = None, 
+                             score: float = 0.0, reasons: list = None):
+        """
+        Enregistre un événement de qualification
+        
+        Args:
+            message: Message du log
+            prospect_id: ID du prospect
+            score: Score de qualification
+            reasons: Raisons de la qualification
+        """
+        extra_data = {
+            'prospect_id': prospect_id,
+            'score': score,
+            'reasons': reasons or [],
+            'event_type': 'qualification'
+        }
+        
+        self.log_event('INFO', message, 'processors', extra_data=extra_data)
+    
+    def log_scheduler_event(self, message: str, task_name: str = None, 
+                           status: str = None, error: str = None):
+        """
+        Enregistre un événement du scheduler
+        
+        Args:
+            message: Message du log
+            task_name: Nom de la tâche
+            status: Statut de la tâche
+            error: Erreur rencontrée
+        """
+        extra_data = {
+            'task_name': task_name,
+            'status': status,
+            'error': error,
+            'event_type': 'scheduler'
+        }
+        
+        if error:
+            self.log_event('ERROR', message, 'scheduler', extra_data=extra_data)
+        else:
+            self.log_event('INFO', message, 'scheduler', extra_data=extra_data)
+    
+    def log_performance_event(self, metric_name: str, metric_value: float, 
+                           dimension: str = None, dimension_value: str = None):
+        """
+        Enregistre un événement de performance
+        
+        Args:
+            metric_name: Nom de la métrique
+            metric_value: Valeur de la métrique
+            dimension: Dimension de la métrique
+            dimension_value: Valeur de la dimension
+        """
+        extra_data = {
+            'metric_name': metric_name,
+            'metric_value': metric_value,
+            'dimension': dimension,
+            'dimension_value': dimension_value,
+            'event_type': 'performance'
+        }
+        
+        self.log_event('INFO', f"Métrique {metric_name}: {metric_value}", 'performance', extra_data=extra_data)
+    
+    def get_recent_events(self, level: str = None, module: str = None, 
+                          limit: int = 100) -> list:
+        """
+        Récupère les événements récents
+        
+        Args:
+            level: Filtrer par niveau
+            module: Filtrer par module
+            limit: Limiter le nombre de résultats
+            
+        Returns:
+            Liste des événements récents
+        """
+        try:
+            conn = get_database_connection()
+            cursor = conn.cursor()
+            
+            query = "SELECT * FROM system_logs"
+            params = []
+            
+            if level:
+                query += " WHERE level = ?"
+                params.append(level)
+            
+            if module:
+                if level:
+                    query += " AND module = ?"
+                else:
+                    query += " WHERE module = ?"
+                params.append(module)
+            
+            query += " ORDER BY created_at DESC LIMIT ?"
+            params.append(limit)
+            
+            cursor.execute(query, tuple(params) if params else None)
+            events = cursor.fetchall()
+            
+            # Convertir en dictionnaires
+            columns = [desc[0] for desc in cursor.description]
+            return [dict(zip(columns, event)) for event in events]
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des événements récents: {e}")
+            return []
+    
+    def get_events_by_date_range(self, start_date: str, end_date: str) -> list:
+        """
+        Récupère les événements dans une plage de dates
+        
+        Args:
+            start_date: Date de début (format: YYYY-MM-DD)
+            end_date: Date de fin (format: YYYY-MM-DD)
+            
+        Returns:
+            Liste des événements dans la plage de dates
+        """
+        try:
+            conn = get_database_connection()
+            cursor = conn.cursor()
+            
+            query = """
+            SELECT * FROM system_logs 
+            WHERE DATE(created_at) BETWEEN ? AND ?
+            ORDER BY created_at DESC
+            """
+            
+            cursor.execute(query, (start_date, end_date))
+            events = cursor.fetchall()
+            
+            # Convertir en dictionnaires
+            columns = [desc[0] for desc in cursor.description]
+            return [dict(zip(columns, event)) for event in events]
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des événements par plage de dates: {e}")
+            return []
+    
+    def get_events_by_module(self, module: str, limit: int = 100) -> list:
+        """
+        Récupère les événements par module
+        
+        Args:
+            module: Nom du module
+            limit: Limiter le nombre de résultats
+            
+        Returns:
+            Liste des événements pour le module
+        """
+        return self.get_recent_events(module=module, limit=limit)
+    
+    def get_error_events(self, limit: int = 50) -> list:
+        """
+        Récupère les événements d'erreur
+        
+        Args:
+            limit: Limiter le nombre de résultats
+            
+        Returns:
+            Liste des événements d'erreur
+        """
+        return self.get_recent_events(level='ERROR', limit=limit)
+    
+    def cleanup_old_logs(self, days_to_keep: int = 30) -> int:
+        """
+        Nettoie les anciens logs
+        
+        Args:
+            days_to_keep: Nombre de jours à conserver
+            
+        Returns:
+            Nombre de logs supprimés
+        """
+        try:
+            from src.core.database import cleanup_old_logs
+            return cleanup_old_logs(days_to_keep)
+        except Exception as e:
+            logger.error(f"Erreur lors du nettoyage des logs: {e}")
+            return 0
+    
+    def archive_logs(self, archive_path: str = "data/logs/archive") -> bool:
+        """
+        Archive les logs dans un fichier séparé
+        
+        Args:
+            archive_path: Chemin de l'archive
+            
+        Returns:
+            True si l'archivage a réussi, False sinon
+        """
+        try:
+            import os
+            import shutil
+            from datetime import datetime, timedelta
+            
+            # Créer le répertoire d'archive
+            os.makedirs(archive_path, exist_ok=True)
+            
+            # Nom du fichier d'archive
+            archive_filename = f"system_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            archive_filepath = os.path.join(archive_path, archive_filename)
+            
+            # Copier le fichier de log actuel
+            shutil.copy2(self.log_file_path, archive_filepath)
+            
+            logger.info(f"Logs archivés vers {archive_filepath}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de l'archivage des logs: {e}")
+            return False
+    
+    def rotate_logs(self, max_size_mb: int = 10) -> bool:
+        """
+        Fait une rotation des logs si le fichier dépasse une certaine taille
+        
+        Args:
+            max_size_mb: Taille maximale en MB
+            
+        Returns:
+            True si la rotation a réussi, False sinon
+        """
+        try:
+            import os
+            
+            # Vérifier la taille du fichier de log
+            if os.path.exists(self.log_file_path):
+                size_bytes = os.path.getsize(self.log_file_path)
+                size_mb = size_bytes / (1024 * 1024)
+                
+                if size_mb > max_size_mb:
+                    # Archiver le fichier actuel
+                    self.archive_logs()
+                    
+                    # Créer un nouveau fichier de log
+                    open(self.log_file_path, 'w').close()
+                    
+                    logger.info(f"Rotation des logs effectuée. Fichier précédent archivé.")
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la rotation des logs: {e}")
+            return False
+
+# Instance globale du logger système
+system_logger = SystemLogger()
+
+# Fonctions utilitaires pour la compatibilité
+def log_scraping_event(message: str, url: str = None, emails_found: int = 0, error: str = None):
+    """Enregistre un événement de scraping"""
+    system_logger.log_scraping_event(message, url, emails_found, error)
+
+def log_email_event(message: str, prospect_id: int = None, email_address: str = None, tracking_id: str = None):
+    """Enregistre un événement email"""
+    system_logger.log_email_event(message, prospect_id, email_address, tracking_id)
+
+def log_qualification_event(message: str, prospect_id: int = None, score: float = 0.0, reasons: list = None):
+    """Enregistre un événement de qualification"""
+    system_logger.log_qualification_event(message, prospect_id, score, reasons)
+
+def log_scheduler_event(message: str, task_name: str = None, status: str = None, error: str = None):
+    """Enregistre un événement du scheduler"""
+    system_logger.log_scheduler_event(message, task_name, status, error)
+
+def log_performance_event(metric_name: str, metric_value: float, dimension: str = None, dimension_value: str = None):
+    """Enregistre un événement de performance"""
+    system_logger.log_performance_event(metric_name, metric_value, dimension, dimension_value)
+
+def get_recent_events(level: str = None, module: str = None, limit: int = 100) -> list:
+    """Récupère les événements récents"""
+    return system_logger.get_recent_events(level, module, limit)
+
+def get_error_events(limit: int = 50) -> list:
+    """Récupère les événements d'erreur"""
+    return system_logger.get_error_events(limit)
