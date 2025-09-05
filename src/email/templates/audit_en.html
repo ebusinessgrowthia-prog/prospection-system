@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject }}</title>
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            margin: 0; 
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            padding: 20px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        .content { 
+            margin-bottom: 30px; 
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .cta { 
+            display: inline-block; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 15px 30px; 
+            text-decoration: none; 
+            border-radius: 30px; 
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        .cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .footer { 
+            margin-top: 30px; 
+            padding-top: 20px; 
+            border-top: 1px solid #eee; 
+            font-size: 12px; 
+            color: #666; 
+            text-align: center;
+        }
+        .tracking-pixel { 
+            width: 1px; 
+            height: 1px; 
+            border: 0;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .signature {
+            font-style: italic;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 EBUSINESS AI</h1>
+            <p>AI Expert for E-commerce</p>
+        </div>
+        
+        <div class="content">
+            {{ content | safe }}
+            
+            <br><br>
+            <center>
+                <a href="{{ cta_url }}" class="cta">{{ cta_text }}</a>
+            </center>
+        </div>
+        
+        <div class="footer">
+            <p><strong>This email was sent by {{ company_name }}</strong></p>
+            <p class="signature">{{ your_name }} - {{ your_title }}</p>
+            <p>{{ your_location }}</p>
+            <p>📧 {{ email_address }} | 🌐 {{ website_url }}</p>
+            <br>
+            <p><a href="{{ unsubscribe_url }}" style="color: #666;">Unsubscribe</a></p>
+            <img src="{{ tracking_pixel_url }}" class="tracking-pixel" alt="">
+        </div>
+    </div>
+</body>
+</html>
