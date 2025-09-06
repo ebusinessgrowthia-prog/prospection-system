@@ -25,8 +25,8 @@ email-validator==2.1.0
 apscheduler==3.10.4
 croniter==2.0.1
 
-# Data Processing (version compatible avec Python 3.11)
-pandas==2.0.3
+# Data Processing
+pandas==2.1.4
 openpyxl==3.1.2
 numpy==1.24.4
 
