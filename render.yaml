@@ -6,7 +6,7 @@ services:
     startCommand: python src/main.py
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.4
+        value: 3.11.9
       - key: MISTRAL_API_KEY
         value: 6qbOzQH2oncVctSsHjNfiygavJ0anIFl
       - key: EMAIL_ADDRESS
@@ -71,7 +71,7 @@ services:
     startCommand: python src/scheduler/worker.py
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.4
+        value: 3.11.9
       - key: MISTRAL_API_KEY
         value: 6qbOzQH2oncVctSsHjNfiygavJ0anIFl
       - key: EMAIL_ADDRESS
