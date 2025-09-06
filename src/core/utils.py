@@ -2,7 +2,6 @@
 Utilitaires et fonctions communes pour EBUSINESS AI
 Fonctions de logging, validation, et helpers divers
 """
-
 import os
 import logging
 import json
@@ -13,9 +12,22 @@ from typing import Any, Dict, List, Optional, Union
 from email_validator import validate_email, EmailNotValidError
 import pytz
 
-from src.config import get_config
-
-config = get_config()
+# Import de la configuration
+try:
+    from src.config import get_config
+    config = get_config()
+except ImportError:
+    # Configuration par défaut en cas d'erreur
+    class Config:
+        log_level = "INFO"
+        target_sectors = ["Mode", "Électronique", "Services", "Digital", "Retail"]
+        target_countries = ["France", "Belgique", "Suisse", "Luxembourg"]
+        email_sending_days = ["tuesday", "wednesday", "thursday", "friday"]
+        email_sending_start = 9
+        email_sending_end = 17
+        timezone = "Europe/Paris"
+    
+    config = Config()
 
 def setup_logging():
     """Configure le logging pour l'application"""
@@ -233,7 +245,6 @@ def safe_json_dumps(obj: Any) -> str:
     except:
         return "{}"
 
-# Remplacer la fonction export_prospects_to_excel
 def export_prospects_to_excel(prospects: List[Dict[str, Any]], filename: str = None) -> str:
     """Exporte les prospects vers un fichier CSV (au lieu d'Excel)"""
     if not filename:
