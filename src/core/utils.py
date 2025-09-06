@@ -11,7 +11,6 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 from email_validator import validate_email, EmailNotValidError
-import pandas as pd
 import pytz
 
 from src.config import get_config
@@ -234,20 +233,24 @@ def safe_json_dumps(obj: Any) -> str:
     except:
         return "{}"
 
+# Remplacer la fonction export_prospects_to_excel
 def export_prospects_to_excel(prospects: List[Dict[str, Any]], filename: str = None) -> str:
-    """Exporte les prospects vers un fichier Excel"""
+    """Exporte les prospects vers un fichier CSV (au lieu d'Excel)"""
     if not filename:
-        filename = f"prospects_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        filename = f"prospects_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     
     # S'assurer que le répertoire existe
     os.makedirs('data/exports', exist_ok=True)
     filepath = os.path.join('data/exports', filename)
     
-    # Créer le DataFrame
-    df = pd.DataFrame(prospects)
-    
-    # Exporter vers Excel
-    df.to_excel(filepath, index=False)
+    # Exporter vers CSV
+    import csv
+    with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+        if prospects:
+            fieldnames = prospects[0].keys()
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(prospects)
     
     return filepath
 
