@@ -10,7 +10,6 @@ from typing import List, Dict, Any, Optional
 import requests
 from serpapi import GoogleSearch
 from bs4 import BeautifulSoup
-import pandas as pd
 
 from src.config import get_config
 from src.core.models import ScrapingResult, ProspectData, ProspectSource
@@ -296,17 +295,7 @@ class GoogleDorksScraper:
             return None
     
     def _detect_country(self, title: str, snippet: str, url: str) -> Optional[str]:
-        """
-        Détecte le pays à partir des informations disponibles
-        
-        Args:
-            title: Titre du résultat
-            snippet: Snippet du résultat
-            url: URL du site
-            
-        Returns:
-            str: Pays détecté ou None
-        """
+        """Détecte le pays à partir des informations disponibles"""
         try:
             text = f"{title} {snippet} {url}".lower()
             
@@ -317,8 +306,7 @@ class GoogleDorksScraper:
                 "Suisse": ["suisse", "suisse", "zurich", "genève", "lausanne", ".ch"],
                 "Luxembourg": ["luxembourg", "luxembourgeois", ".lu"],
                 "Monaco": ["monaco", "monégasque", ".mc"],
-                "Canada (Québec)": ["québec", "quebec", "canada", "montréal", "toronto", ".ca"],
-                
+                "Canada (Québec)": ["québec", "quebec", "canada", "montréal", "toronto", ".ca"]
             }
             
             # Compter les occurrences de mots-clés par pays
