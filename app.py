@@ -18,7 +18,7 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDlpgExpY2CqmPki0cb4dNRQ
 SMTP_GROWTH_SERVER = "smtp.gmail.com"
 SMTP_GROWTH_PORT = 587
 SMTP_GROWTH_USERNAME = "ebusinessgrowthai@gmail.com"
-SMTP_GROWTH_PASSWORD = "bssi qnqy rdfz cchf".replace(" ", "")  # À METTRE À JOUR
+SMTP_GROWTH_PASSWORD = "rvzc gerd bgxv tyuc".replace(" ", "")  # À METTRE À JOUR
 
 SMTP_AI_SERVER = "smtp.gmail.com"
 SMTP_AI_PORT = 587
