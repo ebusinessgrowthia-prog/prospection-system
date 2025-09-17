@@ -1,14 +1,14 @@
-# 🚀 Webhook Automation - EBUSINESS GROWTH & AI
+# 🤖 Webhook Automation - EBUSINESS AI (ORBIS)
 
-Système d'automatisation complet pour traiter les formulaires de deux agences différentes en utilisant Gemini 2.0 Flash pour l'analyse et la génération d'emails personnalisés.
+Système d'automatisation pour traiter les demandes d'installation d'Orbis (Vendeur Digital Pro) en utilisant l'IA pour l'analyse et la génération d'emails personnalisés.
 
 ## 🎯 Fonctionnalités
 
-- **Deux webhooks distincts** pour EBUSINESS GROWTH et EBUSINESS AI
+- **Webhook unique** pour EBUSINESS AI (ORBIS)
 - **Traitement par IA** avec Gemini 2.0 Flash pour extraire et structurer les données
 - **Génération automatique d'emails** avec mise en page HTML/CSS personnalisée
-- **Envoi d'emails** via SMTP dédié pour chaque agence
-- **Design personnalisé** pour chaque agence (Gold pour GROWTH, Noir/Rouge pour AI)
+- **Envoi d'emails** via SMTP dédié
+- **Design personnalisé** Noir et Rouge pour Orbis
 
 ## 🚀 Déploiement Rapide
 
@@ -22,7 +22,7 @@ Cliquez sur "Fork" en haut de cette page pour créer une copie dans votre compte
 2. Cliquez sur **New > Web Service**
 3. Connectez votre dépôt GitHub fraîchement forké
 4. Configurez le service :
-   - **Name**: `webhook-automation`
+   - **Name**: `orbis-automation`
    - **Language**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `gunicorn app:app`
@@ -33,33 +33,30 @@ Cliquez sur "Fork" en haut de cette page pour créer une copie dans votre compte
 
 Le déploiement est maintenant terminé. Toutes les configurations sont déjà intégrées dans le code.
 
-## 🔗 Vos Liens Webhook
+## 🔗 Votre Lien Webhook
 
-Une fois déployé, Render vous donnera une URL comme : `https://webhook-automation.onrender.com`
+Une fois déployé, Render vous donnera une URL comme : `https://webhook-automation.onrender.com/webhook/ai`
 
-### Pour EBUSINESS GROWTH :
-https://webhook-automation.onrender.com/webhook/growth
+Votre webhook sera : https://webhook-automation.onrender.com/webhook/ai
+## 📝 Configuration du formulaire web
 
-
-### Pour EBUSINESS AI :
-https://webhook-automation.onrender.com/webhook/ai
-
-
-## 📝 Configuration des formulaires web
-
-### Exemple de formulaire pour EBUSINESS GROWTH :
+### Exemple de formulaire pour ORBIS :
 
 ```html
-<form action="https://webhook-automation.onrender.com/webhook/growth" method="POST">
-    <input type="text" name="nom" placeholder="Votre nom complet" required>
-    <input type="email" name="email" placeholder="Votre email" required>
-    <input type="tel" name="telephone" placeholder="Votre téléphone">
-    <select name="service" required>
-        <option value="">Choisissez un service</option>
-        <option value="Rétention & Relance B2B">Rétention & Relance B2B</option>
-        <option value="Automatisation Marketing">Automatisation Marketing</option>
-        <option value="Growth Hacking">Growth Hacking</option>
+<form id="orbis-form" action="https://orbis-automation.onrender.com/webhook/ai" method="POST">
+    <input type="text" name="name" placeholder="Nom & Prénom" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="tel" name="phone" placeholder="Téléphone (WhatsApp)" required>
+    <input type="text" name="shopName" placeholder="Nom de la boutique" required>
+    <input type="text" name="website" placeholder="Site web / Instagram" required>
+    <select name="platform" required>
+        <option value="">Sélectionnez une plateforme</option>
+        <option value="Shopify">Shopify</option>
+        <option value="WooCommerce">WooCommerce</option>
+        <option value="PrestaShop">PrestaShop</option>
+        <option value="Magento">Magento</option>
+        <option value="Custom">Site custom</option>
+        <option value="Autre">Autre</option>
     </select>
-    <textarea name="description" placeholder="Décrivez votre projet" required></textarea>
     <button type="submit">Envoyer ma demande</button>
 </form>
