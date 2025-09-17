@@ -14,18 +14,12 @@ CORS(app, resources={r"/*": {"origins": ["*"], "methods": ["GET", "POST", "OPTIO
 # Configuration
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDlpgExpY2CqmPki0cb4dNRQICJKZ2i0TM')
 
-# Configuration SMTP - À METTRE À JOUR DANS RENDER
-SMTP_GROWTH_SERVER = "smtp.gmail.com"
-SMTP_GROWTH_PORT = 587
-SMTP_GROWTH_USERNAME = "ebusinessgrowthai@gmail.com"
-SMTP_GROWTH_PASSWORD = "rvzc gerd bgxv tyuc".replace(" ", "")  # À METTRE À JOUR
-
+# Configuration SMTP pour EBUSINESS AI
 SMTP_AI_SERVER = "smtp.gmail.com"
 SMTP_AI_PORT = 587
 SMTP_AI_USERNAME = "ia.ebusinessag@gmail.com"
-SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy".replace(" ", "")  # À METTRE À JOUR
+SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy".replace(" ", "")
 
-EMAIL_GROWTH = "ebusinessgrowthia@gmail.com"
 EMAIL_AI = "ia.ebusinessag@gmail.com"
 
 genai.configure(api_key=GEMINI_API_KEY)
@@ -72,329 +66,57 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-def create_growth_notification_email(data):
-    """Crée l'email de notification pour EBUSINESS GROWTH"""
-    subject = f"🚀 Nouveau Lead AUTOMATISATION - EBUSINESS GROWTH - {data.get('nom', 'Non spécifié')}"
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }}
-            .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-            .header {{ text-align: center; margin-bottom: 30px; }}
-            .header h1 {{ color: #FFD700; margin: 0; font-size: 28px; }}
-            .header p {{ color: #666; margin: 10px 0 0 0; }}
-            .content {{ line-height: 1.6; color: #333; }}
-            .highlight {{ background: #FFD700; color: #333; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>🚀 Nouveau Lead AUTOMATISATION - EBUSINESS GROWTH</h1>
-                <p>Lead reçu le {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
-            </div>
-            
-            <div class="content">
-                <p><strong>Nom:</strong> {data.get('nom', 'Non spécifié')}</p>
-                <p><strong>Email:</strong> {data.get('email', 'Non spécifié')}</p>
-                <p><strong>Téléphone:</strong> {data.get('telephone', 'Non spécifié')}</p>
-                <p><strong>Société:</strong> {data.get('societe', 'Non spécifié')}</p>
-                <p><strong>Service:</strong> {data.get('service', 'Non spécifié')}</p>
-                <p><strong>Description:</strong></p>
-                <p>{data.get('description', 'Non spécifié')}</p>
-            </div>
-            
-            <div class="highlight">
-                Ce lead a été automatiquement traité par notre système d'IA et nécessite votre attention dans les 24h.
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
-    return subject, html_content
-
-def create_growth_customer_email(data):
-    """Crée l'email de confirmation client pour EBUSINESS GROWTH"""
-    subject = "Votre réservation est confirmée ✅"
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }}
-            .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-            .header {{ text-align: center; margin-bottom: 30px; }}
-            .header h1 {{ color: #FFD700; margin: 0; font-size: 28px; }}
-            .content {{ line-height: 1.6; color: #333; }}
-            .steps {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }}
-            .steps ol {{ margin: 0; padding-left: 20px; }}
-            .steps li {{ margin: 10px 0; }}
-            .highlight {{ background: #FFD700; color: #333; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }}
-            .signature {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }}
-            .signature strong {{ color: #FFD700; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>{subject}</h1>
-            </div>
-            <div class="content">
-                <p>Bonjour <strong>{data.get('nom', '')}</strong>,</p>
-                <p>Votre réservation est confirmée.</p>
-                <p>Pour avancer efficacement, envoyez-nous votre CRM et tout document client pertinent dès maintenant. Plus vite nous aurons ces informations, plus vite nous réaliserons l'audit et vous fournirons un plan stratégique clair et actionnable.</p>
-                <p>Votre confidentialité est notre priorité. Vos données seront sécurisées et utilisées uniquement pour identifier les opportunités réelles au sein de votre entreprise.</p>
-                <p>Nous nous réjouissons de travailler avec vous pour transformer ces informations en résultats concrets.</p>
-                
-                <div class="steps">
-                    <h3>Le processus se déroule en 5 étapes clés :</h3>
-                    <ol>
-                        <li>Analyse complète de votre situation - Audit approfondi de vos fuites clients et opportunités dormantes</li>
-                        <li>Mapping détaillé de vos clients - Segmentation et identification des leviers de rétention</li>
-                        <li>Validation de la stratégie - Présentation de votre plan d'action personnalisé</li>
-                        <li>Mise en place des automatisations - Déploiement des agents IA adaptés à votre entreprise</li>
-                        <li>Amélioration continue des KPI - Optimisation permanente pour des résultats durables</li>
-                    </ol>
-                </div>
-                
-                <div class="highlight">
-                    Vous bénéficiez de la tarification de lancement à 800 € au lieu de la valeur réelle de 8 000 – 25 000 €. Cette approche me permet de constituer mes études de cas exclusives tout en vous offrant une transformation visible en quelques semaines.
-                </div>
-                
-                <p>Vous faites partie des 5 seuls clients qui peuvent bénéficier de cette offre avant le retour au tarif normal. Cette limitation garantit un accompagnement premium et des résultats exceptionnels.</p>
-                
-                <p>Ne laissez plus vos clients partir sans retour. Transformons-les ensemble en revenus récurrents et durables.</p>
-            </div>
-            
-            <div class="signature">
-                <p>À très bientôt pour réveiller vos clients dormants et réduire votre churn de façon durable.</p>
-                <p>Cordialement,</p>
-                <p><strong>Gildea SOGNON-DES</strong><br>
-                Growth Hacker & Expert IA<br>
-                Cotonou, Bénin<br>
-                ebusinessgrowthai@gmail.com</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
-    return subject, html_content
-
-def create_ai_notification_email(data):
-    """Crée l'email de notification pour EBUSINESS AI"""
-    subject = f"🤖 Nouveau Lead AUTOMATISATION - EBUSINESS AI - {data.get('nom', 'Non spécifié')}"
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }}
-            .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-            .header {{ text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #000 0%, #333 100%); color: white; padding: 20px; border-radius: 10px; }}
-            .header h1 {{ color: #fff; margin: 0; font-size: 28px; }}
-            .header p {{ color: #ccc; margin: 10px 0 0 0; }}
-            .content {{ line-height: 1.6; color: #333; }}
-            .highlight {{ background: #000; color: #fff; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>🤖 Nouveau Lead AUTOMATISATION - EBUSINESS AI</h1>
-                <p>Lead reçu le {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
-            </div>
-            
-            <div class="content">
-                <p><strong>Entreprise:</strong> {data.get('nom', 'Non spécifié')}</p>
-                <p><strong>Email:</strong> {data.get('email', 'Non spécifié')}</p>
-                <p><strong>URL:</strong> {data.get('url', 'Non spécifié')}</p>
-                <p><strong>Téléphone:</strong> {data.get('telephone', 'Non spécifié')}</p>
-                <p><strong>Service:</strong> {data.get('service', 'Non spécifié')}</p>
-                <p><strong>Description:</strong></p>
-                <p>{data.get('description', 'Non spécifié')}</p>
-            </div>
-            
-            <div class="highlight">
-                Ce lead a été automatiquement traité par notre système d'IA et nécessite votre attention dans les 24h.
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
-    return subject, html_content
-
-def create_ai_customer_email(data):
-    """Crée l'email de confirmation client pour EBUSINESS AI"""
-    subject = "Votre demande d'audit e-commerce est confirmée ✅"
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }}
-            .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-            .header {{ text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #000 0%, #333 100%); color: white; padding: 20px; border-radius: 10px; }}
-            .header h1 {{ color: #fff; margin: 0; font-size: 28px; }}
-            .content {{ line-height: 1.6; color: #333; }}
-            .list {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #000; }}
-            .list ol {{ margin: 0; padding-left: 20px; }}
-            .list li {{ margin: 10px 0; }}
-            .highlight {{ background: #000; color: #fff; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }}
-            .signature {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }}
-            .signature strong {{ color: #000; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>{subject}</h1>
-            </div>
-            <div class="content">
-                <p>Bonjour <strong>{data.get('nom', '')}</strong>,</p>
-                <p>Votre demande d'audit e-commerce a bien été enregistrée.</p>
-                <p>Je suis Geraldo DOMINGO, et je tiens à vous confirmer personnellement que votre dossier fait désormais partie de mes priorités.</p>
-                
-                <p>Dans les 24-48h, vous recevrez une première analyse de votre profil e-commerce, un questionnaire personnalisé pour affiner l'audit, ainsi que les éléments techniques nécessaires pour l'analyse de vos données.</p>
-                
-                <div class="list">
-                    <h3>Le processus se déroule en 3 étapes simples :</h3>
-                    <ol>
-                        <li>Collecte sécurisée de vos données - Vous transmettez vos analytics, ventes et trafic via notre plateforme sécurisée</li>
-                        <li>Analyse approfondie (2-3 jours) - J'identifie les opportunités concrètes d'optimisation par IA</li>
-                        <li>Restitution des résultats - Si des opportunités sont détectées, nous discutons du plan d'action personnalisé. Si aucun potentiel n'est identifié, vous repartez avec une vision claire de votre situation.</li>
-                    </ol>
-                </div>
-                
-                <div class="highlight">
-                    "Je regarde d'abord vos chiffres. Ensuite, on discute."
-                </div>
-                
-                <p>Vous recevrez votre audit personnalisé sous 3 jours ouvrés.</p>
-                <p>Merci pour votre confiance,</p>
-                <p><strong>Geraldo DOMINGO</strong><br>
-                Expert IA & E-commerce<br>
-                Cotonou, Bénin<br>
-                +229 01 40 72 05 56<br>
-                ia.ebusinessag@gmail.com</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
-    return subject, html_content
-
-@app.route('/webhook/growth', methods=['POST', 'OPTIONS'])
-def webhook_growth():
-    if request.method == 'OPTIONS':
-        return '', 200
-    
-    log_message("🚀 WEBHOOK GROWTH REÇU")
-    
-    try:
-        # Récupérer les données
-        form_data = {}
-        if request.form:
-            form_data = request.form.to_dict()
-        elif request.is_json:
-            form_data = request.get_json()
-        
-        log_message(f"📋 Données brutes: {form_data}")
-        
-        # Traiter les données
-        processed_data = {
-            'nom': form_data.get('nom', 'Non spécifié'),
-            'email': form_data.get('email', 'Non spécifié'),
-            'telephone': form_data.get('telephone', 'Non spécifié'),
-            'societe': form_data.get('societe', 'Non spécifié'),
-            'service': form_data.get('service', 'Rétention & Relance B2B'),
-            'description': form_data.get('description', 'Non spécifié')
-        }
-        
-        log_message(f"✅ Données traitées: {processed_data}")
-        
-        # Configuration SMTP pour GROWTH
-        smtp_config = {
-            'server': SMTP_GROWTH_SERVER,
-            'port': SMTP_GROWTH_PORT,
-            'username': SMTP_GROWTH_USERNAME,
-            'password': SMTP_GROWTH_PASSWORD
-        }
-        
-        # Créer et envoyer l'email de notification
-        subject_notification, html_notification = create_growth_notification_email(processed_data)
-        notification_sent = send_email_with_logs(
-            EMAIL_GROWTH, 
-            subject_notification, 
-            html_notification, 
-            smtp_config, 
-            "notification GROWTH"
-        )
-        
-        # Créer et envoyer l'email client
-        subject_customer, html_customer = create_growth_customer_email(processed_data)
-        customer_sent = send_email_with_logs(
-            processed_data['email'], 
-            subject_customer, 
-            html_customer,
-            smtp_config, 
-            "client GROWTH"
-        )
-        
-        log_message(f"📧 Résumé envoi emails - Notification: {notification_sent}, Client: {customer_sent}")
-        
-        return jsonify({
-            "status": "success",
-            "message": "Lead traité avec succès pour EBUSINESS GROWTH",
-            "data": processed_data,
-            "emails_sent": {
-                "notification": notification_sent,
-                "customer": customer_sent
-            }
-        }), 200
-        
-    except Exception as e:
-        log_message(f"❌ ERREUR WEBHOOK GROWTH: {str(e)}")
-        return jsonify({
-            "status": "error",
-            "message": f"Erreur lors du traitement: {str(e)}"
-        }), 500
-
 @app.route('/webhook/ai', methods=['POST', 'OPTIONS'])
 def webhook_ai():
     if request.method == 'OPTIONS':
         return '', 200
     
-    log_message("🤖 WEBHOOK AI REÇU")
+    log_message("🤖 WEBHOOK AI (ORBIS) REÇU")
     
     try:
+        # Log des informations de la requête
+        log_message(f"Content-Type: {request.content_type}")
+        log_message(f"Method: {request.method}")
+        log_message(f"Headers: {dict(request.headers)}")
+        
         # Récupérer les données
         form_data = {}
         if request.form:
             form_data = request.form.to_dict()
+            log_message("📝 Données reçues comme form-data")
         elif request.is_json:
             form_data = request.get_json()
+            log_message("📝 Données reçues comme JSON")
+        elif request.data:
+            try:
+                form_data = json.loads(request.data.decode('utf-8'))
+                log_message("📝 Données reçues comme JSON brut")
+            except:
+                form_data = {'raw_data': request.data.decode('utf-8')}
+                log_message("📝 Données reçues comme texte brut")
         
         log_message(f"📋 Données brutes: {form_data}")
         
+        # Vérifier les champs obligatoires
+        required_fields = ['name', 'email', 'phone', 'shopName', 'website', 'platform']
+        missing_fields = [field for field in required_fields if field not in form_data]
+        
+        if missing_fields:
+            log_message(f"❌ Champs manquants: {missing_fields}")
+            return jsonify({
+                "status": "error",
+                "message": f"Champs obligatoires manquants: {', '.join(missing_fields)}"
+            }), 400
+        
         # Traiter les données
         processed_data = {
-            'nom': form_data.get('nom', 'Non spécifié'),
+            'name': form_data.get('name', 'Non spécifié'),
             'email': form_data.get('email', 'Non spécifié'),
-            'url': form_data.get('url', 'Non spécifié'),
-            'service': form_data.get('service', 'Audit IA'),
-            'description': form_data.get('description', 'Non spécifié'),
-            'telephone': form_data.get('telephone', 'Non spécifié'),
-            'societe': form_data.get('societe', 'Non spécifié')
+            'phone': form_data.get('phone', 'Non spécifié'),
+            'shopName': form_data.get('shopName', 'Non spécifié'),
+            'website': form_data.get('website', 'Non spécifié'),
+            'platform': form_data.get('platform', 'Non spécifié'),
+            'service': 'Installation Orbis'
         }
         
         log_message(f"✅ Données traitées: {processed_data}")
@@ -408,30 +130,154 @@ def webhook_ai():
         }
         
         # Créer et envoyer l'email de notification
-        subject_notification, html_notification = create_ai_notification_email(processed_data)
+        subject_notification = f"🤖 Nouvelle demande d'installation Orbis - {processed_data['shopName']}"
+        html_notification = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }}
+                .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                .header {{ text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #000 0%, #333 100%); color: white; padding: 20px; border-radius: 10px; }}
+                .header h1 {{ color: #fff; margin: 0; font-size: 28px; }}
+                .header p {{ color: #ccc; margin: 10px 0 0 0; }}
+                .content {{ line-height: 1.6; color: #333; }}
+                .highlight {{ background: #000; color: #fff; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }}
+                .field {{ margin-bottom: 15px; }}
+                .field strong {{ color: #cc0000; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🤖 Nouvelle demande d'installation Orbis</h1>
+                    <p>Lead reçu le {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
+                </div>
+                <div class="content">
+                    <div class="field"><strong>Nom & Prénom:</strong> {processed_data['name']}</div>
+                    <div class="field"><strong>Email:</strong> {processed_data['email']}</div>
+                    <div class="field"><strong>Téléphone:</strong> {processed_data['phone']}</div>
+                    <div class="field"><strong>Nom boutique:</strong> {processed_data['shopName']}</div>
+                    <div class="field"><strong>Site web:</strong> {processed_data['website']}</div>
+                    <div class="field"><strong>Plateforme:</strong> {processed_data['platform']}</div>
+                    <div class="field"><strong>Service:</strong> {processed_data['service']}</div>
+                </div>
+                <div class="highlight">
+                    Ce lead a été automatiquement traité et nécessite votre attention dans les 24h.
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
         notification_sent = send_email_with_logs(
             EMAIL_AI, 
             subject_notification, 
-            html_notification,
+            html_notification, 
             smtp_config, 
-            "notification AI"
+            "notification ORBIS"
         )
         
         # Créer et envoyer l'email client
-        subject_customer, html_customer = create_ai_customer_email(processed_data)
+        subject_customer = "Mise en place rapide de votre Vendeur Digital – informations requises"
+        html_customer = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }}
+                .container {{ max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 30px; border-radius: 15px; color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #cc0000; }}
+                .header {{ text-align: center; margin-bottom: 30px; }}
+                .header h1 {{ color: #cc0000; margin: 0; font-size: 24px; font-weight: bold; }}
+                .content {{ line-height: 1.6; }}
+                .section {{ margin-bottom: 25px; }}
+                .section h3 {{ color: #cc0000; margin-top: 0; margin-bottom: 15px; font-size: 18px; }}
+                .section ul {{ margin: 0; padding-left: 20px; }}
+                .section li {{ margin-bottom: 8px; }}
+                .highlight {{ background: rgba(204, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #cc0000; }}
+                .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; }}
+                .signature {{ color: #ffffff; }}
+                .signature strong {{ color: #cc0000; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Mise en place rapide de votre Vendeur Digital – informations requises</h1>
+                </div>
+                
+                <div class="content">
+                    <p>Bonjour <strong>{processed_data['name']}</strong>,</p>
+                    
+                    <p>Pour installer et activer Orbis, votre Vendeur Digital Pro, et le rendre pleinement opérationnel sur votre boutique, nous aurons besoin :</p>
+                    
+                    <div class="section">
+                        <h3>1. Accès aux outils d'analyse et suivi</h3>
+                        <ul>
+                            <li>Google Tag Manager (compte ou conteneur)</li>
+                            <li>Hotjar (ou équivalent session replay)</li>
+                            <li>Google Analytics (propriété existante ou création par nos soins)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>2. Accès à votre boutique en ligne</h3>
+                        <ul>
+                            <li>Shopify / WooCommerce / PrestaShop (accès administrateur ou développeur limité)</li>
+                            <li>Si site custom : accès FTP / hébergeur ou code d'intégration</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>3. Accès complémentaires (si disponibles)</h3>
+                        <ul>
+                            <li>Pixel Meta (Facebook Ads)</li>
+                            <li>CRM utilisé (ou export clients si non connecté)</li>
+                            <li>WhatsApp Business (numéro ou API si déjà configuré)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section">
+                        <h3>4. Précisions éventuelles</h3>
+                        <p>Plateforme utilisée, contraintes techniques, ou préférences spécifiques pour vos intégrations.</p>
+                    </div>
+                    
+                    <div class="highlight">
+                        ⚡ Vous pouvez nous fournir vos accès existants (invitation collaborateur ou clés API) ou nous demander de créer et configurer les comptes à votre place. Nous vous enverrons ensuite les accès pour modification et contrôle.
+                    </div>
+                    
+                    <p>Toutes les informations partagées resteront strictement confidentielles et seront utilisées uniquement pour la mise en place de votre Vendeur Digital Pro.</p>
+                    
+                    <div class="highlight">
+                        👉 Plus vite nous recevons ces éléments, plus vite Orbis pourra commencer à transformer vos visiteurs en clients.
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>Merci pour votre collaboration,</p>
+                    <div class="signature">
+                        <p><strong>Geraldo Domingo</strong></p>
+                        <p>EBUSINESS AI – Orbis, le Vendeur Digital Pro</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
         customer_sent = send_email_with_logs(
             processed_data['email'], 
             subject_customer, 
-            html_customer,
+            html_customer, 
             smtp_config, 
-            "client AI"
+            "client ORBIS"
         )
         
         log_message(f"📧 Résumé envoi emails - Notification: {notification_sent}, Client: {customer_sent}")
         
         return jsonify({
             "status": "success",
-            "message": "Lead traité avec succès pour EBUSINESS AI",
+            "message": "Demande d'installation Orbis traitée avec succès",
             "data": processed_data,
             "emails_sent": {
                 "notification": notification_sent,
@@ -452,5 +298,5 @@ def health_check():
     return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()}), 200
 
 if __name__ == '__main__':
-    log_message("🚀 Démarrage de l'application")
+    log_message("🚀 Démarrage de l'application pour EBUSINESS AI (ORBIS)")
     app.run(debug=False, host='0.0.0.0', port=10000)
