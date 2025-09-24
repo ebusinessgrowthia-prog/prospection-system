@@ -18,7 +18,7 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDlpgExpY2CqmPki0cb4dNRQ
 SMTP_AI_SERVER = "smtp.gmail.com"
 SMTP_AI_PORT = 587
 SMTP_AI_USERNAME = "ia.ebusinessag@gmail.com"
-SMTP_AI_PASSWORD = "qqdg wyeh qmsi npoy".replace(" ", "")
+SMTP_AI_PASSWORD = "zykr ubtm daaw jgqr".replace(" ", "")
 
 EMAIL_AI = "ia.ebusinessag@gmail.com"
 
